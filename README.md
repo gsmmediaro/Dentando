@@ -96,3 +96,51 @@ The Streamlit app includes an "Export" page where you can upload a trained model
 
 We welcome contributions! Please see [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) for guidelines on how to contribute, report issues, and run the notebook on Google Colab.
 
+## Clinical Reliability Workflow
+
+You can add a reliability-focused evaluation loop with these scripts:
+
+1. Calibrate per-class thresholds on validation data:
+
+```bash
+python scripts/calibrate_thresholds.py --weights runs/dental/pano_caries_only/weights/best.pt --data-yaml data/dentex/yolo/data.yaml --split val --output results/calibrated_thresholds.json
+```
+
+2. Run clinical-style evaluation with per-class metrics and CIs:
+
+```bash
+python scripts/evaluate_clinical.py --weights runs/dental/pano_caries_only/weights/best.pt --data-yaml data/dentex/yolo/data.yaml --split test --thresholds-json results/calibrated_thresholds.json --critical-classes "Caries,Deep Caries" --output results/clinical_eval_report.json
+```
+
+3. Run uncertainty-aware triage on new images:
+
+```bash
+python scripts/triage_with_uncertainty.py --weights runs/dental/pano_caries_only/weights/best.pt --input data/dentex/yolo/images/test --class-names "Caries,Deep Caries" --critical-classes "Deep Caries" --thresholds-json results/calibrated_thresholds.json --output results/triage_report.json
+```
+
+4. Enforce release gates before deployment:
+
+```bash
+python scripts/check_release_gates.py --eval-report results/clinical_eval_report.json --triage-report results/triage_report.json --gates configs/release_gates.yml --output results/release_gate_report.json
+```
+
+5. Export hard false negatives/false positives for relabeling:
+
+```bash
+python scripts/mine_failures.py --eval-report results/clinical_eval_report.json --output-dir results/hard_cases
+```
+
+6. Run the full reliability loop in one command:
+
+```bash
+python scripts/reliability_cycle.py --weights runs/detect/runs/dental/pano_caries_only/weights/best.pt --data-yaml data/dentex/yolo/data.yaml --split val --critical-classes "Caries,Deep Caries" --gates configs/release_gates.yml --output-dir results/reliability_cycle
+```
+
+7. Generate a clinician review CSV for a hard-case batch:
+
+```bash
+python scripts/create_clinician_review_sheet.py --manifest results/reviewed_hard_cases_pano_round1_small30/selected_manifest.json --output results/reviewed_hard_cases_pano_round1_small30/clinician_review.csv
+```
+
+See `docs/CLINICIAN_REVIEW_TEMPLATE.md` for a fast review format.
+

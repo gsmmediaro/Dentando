@@ -1,0 +1,16 @@
+overall:
+  min_macro_recall: 0.78
+  min_macro_precision: 0.65
+  min_overall_recall: 0.80
+  max_failure_rate: 0.35
+
+critical_classes:
+  - name: Caries
+    min_recall: 0.88
+    min_precision: 0.60
+  - name: Deep Caries
+    min_recall: 0.90
+    min_precision: 0.55
+
+triage:
+  max_needs_review_rate: 0.45

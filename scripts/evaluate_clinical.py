@@ -4,9 +4,14 @@ import argparse
 import json
 import logging
 import os
+import sys
 
 import cv2
 from ultralytics import YOLO
+
+ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+if ROOT_DIR not in sys.path:
+    sys.path.insert(0, ROOT_DIR)
 
 from dental_tooth_caries_ai.clinical_ops import bootstrap_metrics
 from dental_tooth_caries_ai.clinical_ops import configure_logging
