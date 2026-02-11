@@ -1,0 +1,24 @@
+# Core
+ultralytics>=8.0
+opencv-python>=4.8
+numpy>=1.24
+Pillow>=9.0
+matplotlib>=3.7
+pyyaml>=6.0
+scipy>=1.10
+scikit-image>=0.21
+
+# Dataset handling
+kagglehub
+huggingface_hub
+requests
+
+# CBCT adapter (optional)
+pydicom>=2.4
+nibabel>=5.0
+
+# Geometry for IoU / tooth assignment
+shapely>=2.0
+
+# Demo app
+streamlit>=1.28

@@ -104,6 +104,7 @@ celerybeat.pid
 # Environments
 .env
 .venv
+.venv*/
 env/
 venv/
 ENV/
@@ -146,6 +147,28 @@ Thumbs.db
 
 # YOLO specific
 runs/
-.mp4
-*.yaml  # Generated YAML configs
-*.pt    # Model weights (optional, if not committing)
+results/
+wandb/
+*.mp4
+*.avi
+*.mov
+
+# Training artifacts and checkpoints
+*.pt
+*.onnx
+*.engine
+*.torchscript
+checkpoints/
+weights/
+
+# Local datasets and archives
+data/
+dataset/
+datasets/
+*.zip
+*.7z
+*.tar
+*.gz
+
+# Keep source YAMLs tracked, ignore only generated configs
+runs/**/*.yaml
