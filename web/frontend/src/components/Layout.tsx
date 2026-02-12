@@ -367,7 +367,7 @@ export default function Layout({ children, onSelectPatient }: Props) {
       </AnimatePresence>
 
       {/* Main content */}
-      <motion.div
+      <div
         style={{
           display: "flex",
           flexDirection: "column",
@@ -376,9 +376,8 @@ export default function Layout({ children, onSelectPatient }: Props) {
           top: 0,
           right: 0,
           bottom: 0,
+          left: panelOpen ? "calc(var(--sidebar-w) + var(--panel-w))" : "var(--sidebar-w)",
         }}
-        animate={{ left: panelOpen ? "calc(var(--sidebar-w) + var(--panel-w))" : "var(--sidebar-w)" }}
-        transition={{ type: "spring", stiffness: 300, damping: 30 }}
       >
         <div style={{
           textAlign: "center",
@@ -390,7 +389,7 @@ export default function Layout({ children, onSelectPatient }: Props) {
           AI decision support tool &mdash; does not replace clinical diagnosis
         </div>
         {children}
-      </motion.div>
+      </div>
     </div>
   );
 }
