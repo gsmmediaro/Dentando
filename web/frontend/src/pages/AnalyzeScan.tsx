@@ -58,6 +58,9 @@ export default function AnalyzeScan() {
     setPreview(null);
     setResult(null);
     setError("");
+    if (inputRef.current) {
+      inputRef.current.value = "";
+    }
   };
 
   const handleAnalyze = async () => {
@@ -271,7 +274,17 @@ export default function AnalyzeScan() {
             )}
           </div>
         )}
-        <input ref={inputRef} type="file" accept={ACCEPT} hidden onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); }} />
+        <input
+          ref={inputRef}
+          type="file"
+          accept={ACCEPT}
+          hidden
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            if (f) handleFile(f);
+            e.currentTarget.value = "";
+          }}
+        />
       </div>
 
       {/* Settings toolbar */}
