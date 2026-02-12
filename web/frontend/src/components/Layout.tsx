@@ -68,7 +68,7 @@ export default function Layout({ children, onSelectPatient }: Props) {
     onSelectPatient?.(scans, name);
   };
 
-  const isHome = location.pathname === "/";
+  const isDashboard = location.pathname === "/dashboard";
 
   const displayName = userProfile
     ? `${userProfile.firstName} ${userProfile.lastName}`.trim()
@@ -157,15 +157,15 @@ export default function Layout({ children, onSelectPatient }: Props) {
             }
           </button>
           <NavLink
-            to="/"
+            to="/dashboard"
             end
             style={{
               ...linkBase,
-              color: isHome ? "var(--color-ink)" : "var(--color-ink-secondary)",
-              background: isHome ? "var(--color-surface)" : "transparent",
+              color: isDashboard ? "var(--color-ink)" : "var(--color-ink-secondary)",
+              background: isDashboard ? "var(--color-surface)" : "transparent",
             }}
-            onMouseEnter={(e) => { if (!isHome) e.currentTarget.style.background = "var(--color-surface-hover)"; }}
-            onMouseLeave={(e) => { if (!isHome) e.currentTarget.style.background = "transparent"; }}
+            onMouseEnter={(e) => { if (!isDashboard) e.currentTarget.style.background = "var(--color-surface-hover)"; }}
+            onMouseLeave={(e) => { if (!isDashboard) e.currentTarget.style.background = "transparent"; }}
           >
             <BarChart3 size={16} />
             Analytics

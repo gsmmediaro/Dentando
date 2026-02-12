@@ -23,12 +23,13 @@ export default function App() {
     <AuthProvider>
       <Layout onSelectPatient={handleSelectPatient}>
         <Routes>
-          <Route path="/" element={<Dashboard />} />
+          <Route path="/" element={<Navigate to="/analyze" replace />} />
+          <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/analyze" element={<AnalyzeScan />} />
           <Route path="/history" element={<History />} />
           <Route path="/terms" element={<Terms />} />
           <Route path="/privacy" element={<Privacy />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route path="*" element={<Navigate to="/analyze" replace />} />
         </Routes>
       </Layout>
       <AuthGate />

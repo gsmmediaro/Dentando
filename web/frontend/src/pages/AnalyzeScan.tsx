@@ -12,7 +12,7 @@ export default function AnalyzeScan() {
   const { user } = useAuth();
   const [models, setModels] = useState<ModelInfo[]>([]);
   const [selectedModel, setSelectedModel] = useState("auto");
-  const [conf, setConf] = useState(0.25);
+  const [conf, setConf] = useState(0.5);
   const [modality, setModality] = useState("Auto");
   const [toothAssign, setToothAssign] = useState(false);
   const [patientName, setPatientName] = useState("");

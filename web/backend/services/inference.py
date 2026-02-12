@@ -2,6 +2,7 @@
 
 import glob as globmod
 import logging
+import os
 from enum import Enum
 from pathlib import Path
 from typing import List
@@ -23,8 +24,57 @@ class SuspicionLevel(Enum):
 
 
 def find_models() -> list[str]:
-    pattern = str(PROJECT_ROOT / "runs" / "detect" / "runs" / "dental" / "*" / "weights" / "best.pt")
-    return sorted(globmod.glob(pattern))
+    """Find model weights from default path and optional env overrides.
+
+    Supported environment variables:
+    - MODEL_PATHS: comma-separated explicit .pt paths
+    - MODELS_DIR: directory to search recursively for best.pt files
+    - MODELS_GLOB: custom glob pattern for model discovery
+    """
+    candidates: set[str] = set()
+
+    default_glob = (
+        PROJECT_ROOT
+        / "runs"
+        / "detect"
+        / "runs"
+        / "dental"
+        / "*"
+        / "weights"
+        / "best.pt"
+    )
+    for path in globmod.glob(str(default_glob)):
+        if Path(path).is_file():
+            candidates.add(str(Path(path).resolve()))
+
+    custom_glob = os.getenv("MODELS_GLOB", "").strip()
+    if custom_glob:
+        for path in globmod.glob(custom_glob):
+            if Path(path).is_file():
+                candidates.add(str(Path(path).resolve()))
+
+    models_dir = os.getenv("MODELS_DIR", "").strip()
+    if models_dir:
+        root = Path(models_dir)
+        if root.exists():
+            for path in root.rglob("best.pt"):
+                if path.is_file():
+                    candidates.add(str(path.resolve()))
+
+    model_paths = os.getenv("MODEL_PATHS", "").strip()
+    if model_paths:
+        for raw in model_paths.split(","):
+            path = Path(raw.strip())
+            if path.is_file():
+                candidates.add(str(path.resolve()))
+
+    models = sorted(candidates)
+    if not models:
+        logger.warning(
+            "No model weights found. Checked default path and env vars "
+            "MODEL_PATHS/MODELS_DIR/MODELS_GLOB."
+        )
+    return models
 
 
 def pick_model_for_image(height: int, width: int) -> str | None:
@@ -54,6 +104,7 @@ def load_model(model_path: str):
     """Load a YOLO model with simple dict cache."""
     if model_path not in _model_cache:
         from ultralytics import YOLO
+
         _model_cache[model_path] = YOLO(model_path)
     return _model_cache[model_path]
 
@@ -101,12 +152,14 @@ def run_analysis(
         cls_ids = boxes.cls.tolist()
         confs = boxes.conf.tolist()
         for (x1, y1, x2, y2), class_id, score in zip(xyxy_list, cls_ids, confs):
-            detections.append({
-                "class": names_map.get(int(class_id), str(int(class_id))),
-                "class_id": int(class_id),
-                "confidence": round(float(score), 3),
-                "bbox": (float(x1), float(y1), float(x2), float(y2)),
-            })
+            detections.append(
+                {
+                    "class": names_map.get(int(class_id), str(int(class_id))),
+                    "class_id": int(class_id),
+                    "confidence": round(float(score), 3),
+                    "bbox": (float(x1), float(y1), float(x2), float(y2)),
+                }
+            )
 
     resolved_modality = modality if modality != "Auto" else detect_modality(model_path)
 
@@ -116,6 +169,7 @@ def run_analysis(
             from dental_tooth_caries_ai.tooth_level.assign_lesions_to_teeth import (
                 make_direct_tooth_predictions,
             )
+
             class_names = list(names_map.values())
             tooth_predictions = make_direct_tooth_predictions(detections, class_names)
 
@@ -127,13 +181,17 @@ def run_analysis(
                     from dental_tooth_caries_ai.tooth_level.assign_lesions_to_teeth import (
                         assign_lesions_to_teeth,
                     )
+
                     teeth = propose_teeth_heuristic(image_array)
                     if teeth:
                         lesion_boxes = [d["bbox"] for d in detections]
                         lesion_classes = [d["class"] for d in detections]
                         lesion_confs = [d["confidence"] for d in detections]
                         tooth_predictions = assign_lesions_to_teeth(
-                            teeth, lesion_boxes, lesion_classes, lesion_confs,
+                            teeth,
+                            lesion_boxes,
+                            lesion_classes,
+                            lesion_confs,
                         )
                 except Exception as e:
                     logger.warning("Tooth assignment failed, using direct: %s", e)
@@ -143,7 +201,10 @@ def run_analysis(
     annotated_image = None
     if tooth_predictions:
         try:
-            from dental_tooth_caries_ai.tooth_level.render_overlays import render_overlay
+            from dental_tooth_caries_ai.tooth_level.render_overlays import (
+                render_overlay,
+            )
+
             annotated_image = render_overlay(image_array, tooth_predictions)
         except Exception:
             annotated_image = results[0].plot()
