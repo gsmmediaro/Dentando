@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import OnboardingFlow from "./OnboardingFlow";
+import quinnLogo from "../../../../quinnnlogo.svg";
 
 const GOOGLE_G = (
   <svg width="18" height="18" viewBox="0 0 48 48">
@@ -140,16 +141,23 @@ export default function AuthGate() {
   return (
     <div style={overlayStyle}>
       <div style={cardStyle}>
-        <h2 style={{
-          fontFamily: "var(--font-display)",
-          fontSize: 24,
-          fontWeight: 400,
-          color: "var(--color-ink)",
-          textAlign: "center",
-          marginBottom: 24,
-        }}>
-          {mode === "login" ? "Welcome back" : "Create account"}
-        </h2>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: 24 }}>
+          <img
+            src={quinnLogo}
+            alt="Quinn logo"
+            style={{ width: 28, height: 28, display: "block", marginBottom: 10 }}
+          />
+          <h2 style={{
+            fontFamily: "var(--font-display)",
+            fontSize: 24,
+            fontWeight: 400,
+            color: "var(--color-ink)",
+            textAlign: "center",
+            marginBottom: 0,
+          }}>
+            {mode === "login" ? "Welcome back" : "Create account"}
+          </h2>
+        </div>
 
         <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           {mode === "register" && (
