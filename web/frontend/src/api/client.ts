@@ -14,7 +14,10 @@ import {
 } from "firebase/firestore";
 import { db } from "../firebase";
 
-const BASE = import.meta.env.VITE_API_BASE_URL || "";
+const BASE =
+  import.meta.env.VITE_API_BASE_URL ||
+  import.meta.env.VITE_API_URL ||
+  "";
 
 export interface Detection {
   class_name: string;
