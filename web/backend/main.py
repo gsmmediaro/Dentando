@@ -1,5 +1,6 @@
 """FastAPI application for Caries Screening."""
 
+import logging
 import os
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -13,6 +14,8 @@ from web.backend.services import inference
 
 STATIC_DIR = Path(__file__).resolve().parent / "static"
 STATIC_DIR.mkdir(parents=True, exist_ok=True)
+
+LOGGER = logging.getLogger(__name__)
 
 # Friendly display names for models
 MODEL_DISPLAY_NAMES: dict[str, str] = {
@@ -34,16 +37,36 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="Caries Screening API", lifespan=lifespan)
 
-origins = os.getenv(
-    "CORS_ORIGINS",
-    "http://localhost:5173,http://127.0.0.1:5173",
-).split(",")
-origin_regex = os.getenv("CORS_ORIGIN_REGEX", r"^https://.*\.vercel\.app$")
+
+def _split_csv(value: str) -> list[str]:
+    return [item.strip() for item in value.split(",") if item.strip()]
+
+
+origins = _split_csv(
+    os.getenv(
+        "CORS_ORIGINS",
+        "http://localhost:5173,http://127.0.0.1:5173",
+    )
+)
+
+for key in ("FRONTEND_ORIGIN", "FRONTEND_URL"):
+    value = (os.getenv(key) or "").strip().rstrip("/")
+    if value and value not in origins:
+        origins.append(value)
+
+origin_regex = os.getenv("CORS_ORIGIN_REGEX")
+if origin_regex is None:
+    origin_regex = r"^https://([a-zA-Z0-9-]+\.)?vercel\.app$"
+else:
+    origin_regex = origin_regex.strip() or None
+
+LOGGER.info("CORS config loaded origins=%s origin_regex=%s", origins, origin_regex)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[o.strip() for o in origins if o.strip()],
+    allow_origins=origins,
     allow_origin_regex=origin_regex if origin_regex else None,
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
