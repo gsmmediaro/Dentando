@@ -96,7 +96,11 @@ export async function analyzeImage(
     body: form,
   });
   if (!res.ok) throw new Error(await res.text());
-  return res.json();
+  const data: AnalysisResult = await res.json();
+  if (data.annotated_image_url?.startsWith("/")) {
+    data.annotated_image_url = build_api_url(data.annotated_image_url);
+  }
+  return data;
 }
 
 export async function getModels(): Promise<ModelInfo[]> {

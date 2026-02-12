@@ -7,7 +7,7 @@ from pathlib import Path
 
 import cv2
 import numpy as np
-from fastapi import APIRouter, File, Form, HTTPException, UploadFile
+from fastapi import APIRouter, File, Form, HTTPException, Request, UploadFile
 
 from web.backend.models import AnalysisResult, Detection
 from web.backend.services import inference
@@ -21,6 +21,7 @@ RESULTS_DIR.mkdir(parents=True, exist_ok=True)
 
 @router.post("/api/analyze", response_model=AnalysisResult)
 async def analyze(
+    request: Request,
     file: UploadFile = File(...),
     model_path: str = Form("auto"),
     conf_threshold: float = Form(0.25),
@@ -40,9 +41,10 @@ async def analyze(
     # Auto-select model based on image dimensions
     if model_path == "auto":
         h, w = image.shape[:2]
-        model_path = inference.pick_model_for_image(h, w)
-        if model_path is None:
+        auto_model_path = inference.pick_model_for_image(h, w)
+        if auto_model_path is None:
             raise HTTPException(status_code=400, detail="No trained models found")
+        model_path = auto_model_path
         logger.info("Auto-selected model: %s", Path(model_path).parent.parent.name)
 
     model_name = Path(model_path).parent.parent.name
@@ -60,7 +62,7 @@ async def analyze(
     img_filename = f"{img_id}.jpg"
     img_path = RESULTS_DIR / img_filename
     cv2.imwrite(str(img_path), result["annotated_image"])
-    annotated_url = f"/static/results/{img_filename}"
+    annotated_url = str(request.url_for("static", path=f"results/{img_filename}"))
 
     turnaround = round(time.time() - start, 2)
 
