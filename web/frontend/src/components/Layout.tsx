@@ -116,7 +116,7 @@ export default function Layout({ children, onSelectPatient }: Props) {
               flexShrink: 0,
             }}
           />
-          Quinn
+          <span style={{ fontFamily: "var(--font-display)" }}>Quinn</span>
         </div>
 
         {/* New session — dark green rectangle, off-white text */}
@@ -301,7 +301,7 @@ export default function Layout({ children, onSelectPatient }: Props) {
               borderBottom: "1px solid var(--border-color)",
               marginBottom: 12,
             }}>
-              Patients
+              <span style={{ fontFamily: "var(--font-display)" }}>Patients</span>
             </div>
             {patients.length === 0 ? (
               <div style={{ textAlign: "center", padding: "32px 20px", color: "var(--color-ink-tertiary)" }}>

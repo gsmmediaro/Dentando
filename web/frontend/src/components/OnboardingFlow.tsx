@@ -4,6 +4,7 @@ import * as SelectPrimitive from "@radix-ui/react-select";
 import { ChevronDown, X } from "lucide-react";
 import { db } from "../firebase";
 import { useAuth } from "../contexts/AuthContext";
+import quinnLogo from "../../../../quinnnlogo.svg";
 
 const SPECIALITIES = [
   "General dentist",
@@ -131,7 +132,13 @@ function StyledSelect({
 }
 
 function TermsContent() {
-  const h2: React.CSSProperties = { fontSize: 15, fontWeight: 600, marginTop: 20, marginBottom: 6 };
+  const h2: React.CSSProperties = {
+    fontSize: 15,
+    fontWeight: 600,
+    marginTop: 20,
+    marginBottom: 6,
+    fontFamily: "var(--font-display)",
+  };
   const p: React.CSSProperties = { fontSize: 13, color: "var(--color-ink-secondary)", marginBottom: 12, lineHeight: 1.65 };
   return (
     <>
@@ -154,7 +161,13 @@ function TermsContent() {
 }
 
 function PrivacyContent() {
-  const h2: React.CSSProperties = { fontSize: 15, fontWeight: 600, marginTop: 20, marginBottom: 6 };
+  const h2: React.CSSProperties = {
+    fontSize: 15,
+    fontWeight: 600,
+    marginTop: 20,
+    marginBottom: 6,
+    fontFamily: "var(--font-display)",
+  };
   const p: React.CSSProperties = { fontSize: 13, color: "var(--color-ink-secondary)", marginBottom: 12, lineHeight: 1.65 };
   return (
     <>
@@ -294,16 +307,23 @@ export default function OnboardingFlow() {
       <div>
         {legalPopupEl}
         {dots}
-        <h2 style={{
-          fontFamily: "var(--font-display)",
-          fontSize: 22,
-          fontWeight: 400,
-          color: "var(--color-ink)",
-          textAlign: "center",
-          marginBottom: 20,
-        }}>
-          About you
-        </h2>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: 20 }}>
+          <img
+            src={quinnLogo}
+            alt="Quinn logo"
+            style={{ width: 28, height: 28, display: "block", marginBottom: 10 }}
+          />
+          <h2 style={{
+            fontFamily: "var(--font-display)",
+            fontSize: 22,
+            fontWeight: 400,
+            color: "var(--color-ink)",
+            textAlign: "center",
+            marginBottom: 0,
+          }}>
+            About you
+          </h2>
+        </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           <StyledSelect
@@ -370,16 +390,23 @@ export default function OnboardingFlow() {
     return (
       <div>
         {dots}
-        <h2 style={{
-          fontFamily: "var(--font-display)",
-          fontSize: 22,
-          fontWeight: 400,
-          color: "var(--color-ink)",
-          textAlign: "center",
-          marginBottom: 20,
-        }}>
-          Your organization
-        </h2>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: 20 }}>
+          <img
+            src={quinnLogo}
+            alt="Quinn logo"
+            style={{ width: 28, height: 28, display: "block", marginBottom: 10 }}
+          />
+          <h2 style={{
+            fontFamily: "var(--font-display)",
+            fontSize: 22,
+            fontWeight: 400,
+            color: "var(--color-ink)",
+            textAlign: "center",
+            marginBottom: 0,
+          }}>
+            Your organization
+          </h2>
+        </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           <input
@@ -434,7 +461,11 @@ export default function OnboardingFlow() {
     <div>
       {dots}
       <div style={{ textAlign: "center" }}>
-        <div style={{ fontSize: 48, marginBottom: 12 }}>🎉</div>
+        <img
+          src={quinnLogo}
+          alt="Quinn logo"
+          style={{ width: 28, height: 28, display: "block", margin: "0 auto 10px" }}
+        />
         <h2 style={{
           fontFamily: "var(--font-display)",
           fontSize: 24,
