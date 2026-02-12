@@ -1,0 +1,94 @@
+@import "tailwindcss";
+
+@theme {
+  /* Surfaces — warm parchment */
+  --color-bg: #f5f3ee;
+  --color-surface: #ffffff;
+  --color-surface-hover: #faf9f6;
+  --color-surface-inset: #efeee9;
+
+  /* Text — warm brown-black */
+  --color-ink: #2d2a24;
+  --color-ink-secondary: #6b6560;
+  --color-ink-tertiary: #9b958d;
+  --color-ink-ghost: #c4bfb6;
+
+  /* Primary — leaves green */
+  --color-leaf: #2d7a4f;
+  --color-leaf-hover: #246841;
+  --color-leaf-subtle: #e8f5ee;
+  --color-leaf-text: #1a5c38;
+
+  /* Semantic */
+  --color-low: #2d7a4f;
+  --color-low-bg: #e8f5ee;
+  --color-moderate: #b8860b;
+  --color-moderate-bg: #fdf6e3;
+  --color-high: #c0392b;
+  --color-high-bg: #fdf0ee;
+  --color-review: #7c3aed;
+  --color-review-bg: #f3efff;
+
+  /* Radii */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-full: 9999px;
+
+  /* Fonts */
+  --font-body: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-display: 'Newsreader', Georgia, 'Times New Roman', serif;
+}
+
+/* Borders — whisper-quiet warm (CSS vars, not theme tokens) */
+:root {
+  --border-color: rgba(45, 42, 36, 0.08);
+  --border-emphasis: rgba(45, 42, 36, 0.15);
+  --sidebar-w: 260px;
+  --panel-w: 280px;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-body);
+  background: var(--color-bg);
+  color: var(--color-ink);
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  font-size: 14px;
+}
+
+/* Verdict badges */
+.verdict-badge {
+  @apply inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wide;
+}
+.verdict-badge.low { background: var(--color-low-bg); color: var(--color-low); }
+.verdict-badge.moderate { background: var(--color-moderate-bg); color: var(--color-moderate); }
+.verdict-badge.high { background: var(--color-high-bg); color: var(--color-high); }
+.verdict-badge.review { background: var(--color-review-bg); color: var(--color-review); }
+
+/* Spinner */
+.spinner {
+  @apply w-4 h-4 rounded-full border-2 animate-spin;
+  border-color: var(--border-emphasis);
+  border-top-color: white;
+}
+
+/* Remove focus outline from all interactive elements */
+button:focus, button:focus-visible,
+a:focus, a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+[role="button"]:focus, [role="button"]:focus-visible {
+  outline: none;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-emphasis); border-radius: 3px; }

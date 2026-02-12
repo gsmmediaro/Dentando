@@ -1,0 +1,441 @@
+import { useEffect, useMemo, useRef, useState, useCallback } from "react";
+import { Upload, X, Loader2, Layers, Gauge, ScanLine, Waypoints } from "lucide-react";
+import * as SelectPrimitive from "@radix-ui/react-select";
+import * as SliderPrimitive from "@radix-ui/react-slider";
+import { analyzeImage, getModels, saveScanToFirestore, type AnalysisResult, type ModelInfo } from "../api/client";
+import { useAuth } from "../contexts/AuthContext";
+import FindingsTable from "../components/FindingsTable";
+
+const ACCEPT = ".jpg,.jpeg,.png,.bmp,.tiff,.tif";
+
+export default function AnalyzeScan() {
+  const { user } = useAuth();
+  const [models, setModels] = useState<ModelInfo[]>([]);
+  const [selectedModel, setSelectedModel] = useState("auto");
+  const [conf, setConf] = useState(0.25);
+  const [modality, setModality] = useState("Auto");
+  const [toothAssign, setToothAssign] = useState(false);
+  const [patientName, setPatientName] = useState("");
+  const [file, setFile] = useState<File | null>(null);
+  const [preview, setPreview] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<AnalysisResult | null>(null);
+  const [error, setError] = useState("");
+  const [dragOver, setDragOver] = useState(false);
+  const [openPopover, setOpenPopover] = useState<string | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => { getModels().then(setModels); }, []);
+
+  useEffect(() => {
+    if (!file) { setPreview(null); return; }
+    const url = URL.createObjectURL(file);
+    setPreview(url);
+    return () => URL.revokeObjectURL(url);
+  }, [file]);
+
+  const handleFile = useCallback((f: File) => {
+    setFile(f);
+    setResult(null);
+    setError("");
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOver(false);
+    const f = e.dataTransfer.files[0];
+    if (f) handleFile(f);
+  }, [handleFile]);
+
+  const clearFile = () => {
+    setFile(null);
+    setPreview(null);
+    setResult(null);
+    setError("");
+  };
+
+  const handleAnalyze = async () => {
+    if (!file) return;
+    setLoading(true);
+    setError("");
+    setResult(null);
+    try {
+      const res = await analyzeImage(file, selectedModel, conf, modality, toothAssign, patientName);
+      setResult(res);
+      // Save to Firestore
+      if (user) {
+        saveScanToFirestore(user.uid, {
+          filename: res.filename,
+          patientName,
+          suspicion: res.suspicion_level,
+          confidence: res.overall_confidence,
+          detectionsCount: res.num_detections,
+          modality: res.modality,
+          turnaroundS: res.turnaround_s,
+        }).catch(console.error);
+      }
+    } catch (e: any) {
+      setError(e.message || "Analiza a esuat");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const MODEL_DISPLAY: Record<string, string> = {
+    "pano_caries_only_gpu2": "Panoramic",
+    "pano_caries_only": "Avocado",
+    "pano_caries_roboflow_v1": "Kiwi",
+    "bitewing_caries_only": "Bitewing",
+  };
+
+  const modelOptions = useMemo(() => [
+    { value: "auto", label: "Auto" },
+    ...models.map(m => ({ value: m.path, label: MODEL_DISPLAY[m.name] || m.name }))
+  ], [models]);
+
+  const currentModelLabel = modelOptions.find(o => o.value === selectedModel)?.label || "Auto";
+
+  const toolbarBtnStyle = (active: boolean = false): React.CSSProperties => ({
+    display: "flex",
+    alignItems: "center",
+    gap: 6,
+    padding: "6px 10px",
+    borderRadius: 8,
+    fontSize: 12,
+    fontWeight: 500,
+    border: "1px solid var(--border-color)",
+    cursor: "pointer",
+    transition: "all 0.15s",
+    background: active ? "var(--color-leaf-subtle)" : "var(--color-surface)",
+    color: active ? "var(--color-leaf-text)" : "var(--color-ink-secondary)",
+    fontFamily: "var(--font-body)",
+  });
+
+  const dropdownItemStyle = (isActive: boolean): React.CSSProperties => ({
+    padding: "7px 12px",
+    fontSize: 13,
+    borderRadius: 6,
+    border: "none",
+    cursor: "pointer",
+    textAlign: "left" as const,
+    fontFamily: "var(--font-body)",
+    background: isActive ? "var(--color-leaf-subtle)" : "transparent",
+    color: isActive ? "var(--color-leaf-text)" : "var(--color-ink)",
+    fontWeight: isActive ? 500 : 400,
+    width: "100%",
+    display: "block",
+    transition: "background 0.1s",
+  });
+
+  return (
+    <div style={{
+      flex: 1,
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      justifyContent: result ? "flex-start" : "center",
+      padding: "32px 32px 24px",
+      maxWidth: 900,
+      width: "100%",
+      margin: "0 auto",
+      minHeight: 0,
+    }}>
+      {/* Header row: title + patient name inline */}
+      <div style={{
+        display: "flex",
+        alignItems: "baseline",
+        gap: 24,
+        width: "100%",
+        marginBottom: 24,
+      }}>
+        <h1 style={{
+          fontFamily: "var(--font-display)",
+          fontSize: 26,
+          fontWeight: 400,
+          color: "var(--color-ink)",
+          whiteSpace: "nowrap",
+          margin: 0,
+        }}>
+          Analiza radiografie
+        </h1>
+        <input
+          style={{
+            flex: 1,
+            padding: "8px 14px",
+            background: "transparent",
+            border: "1px solid var(--border-color)",
+            borderRadius: 8,
+            fontSize: 14,
+            fontFamily: "var(--font-body)",
+            color: "var(--color-ink)",
+            outline: "none",
+            transition: "border-color 0.15s",
+          }}
+          type="text"
+          placeholder="Numele pacientului (optional)"
+          value={patientName}
+          onChange={(e) => setPatientName(e.target.value)}
+          onFocus={(e) => e.currentTarget.style.borderColor = "var(--color-leaf)"}
+          onBlur={(e) => e.currentTarget.style.borderColor = "var(--border-color)"}
+        />
+      </div>
+
+      {/* Upload / Image area */}
+      <div style={{ width: "100%", marginBottom: 16 }}>
+        {!file ? (
+          <div
+            onClick={() => inputRef.current?.click()}
+            onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+            onDragLeave={() => setDragOver(false)}
+            onDrop={handleDrop}
+            style={{
+              width: "100%",
+              border: `1.5px dashed ${dragOver ? "var(--color-leaf)" : "var(--border-emphasis)"}`,
+              borderRadius: 14,
+              padding: "56px 32px",
+              textAlign: "center",
+              cursor: "pointer",
+              transition: "all 0.2s",
+              background: dragOver ? "var(--color-leaf-subtle)" : "var(--color-surface)",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <Upload size={36} strokeWidth={1.5} style={{ color: "var(--color-ink-ghost)", marginBottom: 10 }} />
+            <div style={{ fontSize: 15, color: "var(--color-ink-secondary)" }}>
+              Trage o radiografie aici, sau apasa pentru a selecta
+            </div>
+            <div style={{ fontSize: 12, color: "var(--color-ink-tertiary)", marginTop: 4 }}>
+              JPG, PNG, BMP, TIFF
+            </div>
+          </div>
+        ) : (
+          <div style={{ position: "relative" }} className="group">
+            <div style={{ width: "100%", background: "#1a1a1a", borderRadius: 14, overflow: "hidden" }}>
+              <img
+                src={result ? result.annotated_image_url : preview!}
+                alt="Radiografie"
+                style={{ width: "100%", display: "block" }}
+              />
+            </div>
+            {!loading && (
+              <button
+                onClick={clearFile}
+                className="opacity-0 group-hover:opacity-100"
+                style={{
+                  position: "absolute", top: 10, right: 10, width: 30, height: 30,
+                  borderRadius: "50%", background: "rgba(0,0,0,0.5)", color: "white",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  border: "none", cursor: "pointer", transition: "opacity 0.2s",
+                }}
+              >
+                <X size={14} />
+              </button>
+            )}
+            {!result && (
+              <div style={{
+                position: "absolute", bottom: 0, left: 0, right: 0, padding: "12px 16px",
+                background: "linear-gradient(to top, rgba(0,0,0,0.55), transparent)",
+                borderRadius: "0 0 14px 14px", display: "flex", alignItems: "center", justifyContent: "space-between",
+              }}>
+                <span style={{ color: "rgba(255,255,255,0.7)", fontSize: 13, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginRight: 12 }}>
+                  {file.name}
+                </span>
+                <button
+                  onClick={handleAnalyze}
+                  disabled={loading}
+                  style={{
+                    display: "flex", alignItems: "center", gap: 6, padding: "8px 18px",
+                    borderRadius: 8, fontSize: 13, fontWeight: 500, border: "none",
+                    cursor: loading ? "default" : "pointer", transition: "all 0.15s",
+                    background: loading ? "rgba(255,255,255,0.2)" : "var(--color-leaf)",
+                    color: loading ? "rgba(255,255,255,0.6)" : "white", flexShrink: 0,
+                  }}
+                >
+                  {loading ? (<><Loader2 size={14} className="animate-spin" /> Analizeaza...</>) : "Analizeaza"}
+                </button>
+              </div>
+            )}
+            {result && (
+              <div style={{ position: "absolute", top: 10, left: 10 }}>
+                <span className={`verdict-badge ${result.suspicion_level.toLowerCase()}`}>{result.suspicion_level}</span>
+              </div>
+            )}
+          </div>
+        )}
+        <input ref={inputRef} type="file" accept={ACCEPT} hidden onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); }} />
+      </div>
+
+      {/* Settings toolbar */}
+      <div style={{ display: "flex", alignItems: "center", gap: 6, width: "100%", marginBottom: 20, flexWrap: "wrap" }}>
+
+        {/* Model — direct Radix Select, no popover wrapper */}
+        <SelectPrimitive.Root value={selectedModel} onValueChange={setSelectedModel}>
+          <SelectPrimitive.Trigger style={toolbarBtnStyle()}>
+            <Layers size={13} />
+            <SelectPrimitive.Value>{currentModelLabel}</SelectPrimitive.Value>
+          </SelectPrimitive.Trigger>
+          <SelectPrimitive.Portal>
+            <SelectPrimitive.Content
+              style={{
+                background: "var(--color-surface)",
+                border: "1px solid var(--border-emphasis)",
+                borderRadius: 10,
+                boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
+                overflow: "hidden",
+                zIndex: 100,
+                minWidth: 180,
+              }}
+              position="popper"
+              sideOffset={6}
+              side="bottom"
+              align="start"
+            >
+              <SelectPrimitive.Viewport style={{ padding: 4 }}>
+                {modelOptions.map(opt => (
+                  <SelectPrimitive.Item
+                    key={opt.value}
+                    value={opt.value}
+                    style={{
+                      padding: "7px 12px",
+                      fontSize: 13,
+                      color: "var(--color-ink)",
+                      borderRadius: 6,
+                      cursor: "pointer",
+                      outline: "none",
+                      transition: "background 0.1s",
+                    }}
+                    className="data-[highlighted]:bg-leaf-subtle"
+                  >
+                    <SelectPrimitive.ItemText>{opt.label}</SelectPrimitive.ItemText>
+                  </SelectPrimitive.Item>
+                ))}
+              </SelectPrimitive.Viewport>
+            </SelectPrimitive.Content>
+          </SelectPrimitive.Portal>
+        </SelectPrimitive.Root>
+
+        {/* Confidence — popover below */}
+        <div style={{ position: "relative" }}>
+          <button
+            style={toolbarBtnStyle(openPopover === "conf")}
+            onClick={() => setOpenPopover(openPopover === "conf" ? null : "conf")}
+          >
+            <Gauge size={13} />
+            {Math.round(conf * 100)}%
+          </button>
+          {openPopover === "conf" && (
+            <>
+              <div style={{ position: "fixed", inset: 0, zIndex: 40 }} onClick={() => setOpenPopover(null)} />
+              <div style={{
+                position: "absolute",
+                top: "calc(100% + 6px)",
+                left: 0,
+                background: "var(--color-surface)",
+                border: "1px solid var(--border-emphasis)",
+                borderRadius: 10,
+                boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
+                padding: 16,
+                zIndex: 50,
+                width: 220,
+              }}>
+                <div style={{ fontSize: 11, fontWeight: 500, color: "var(--color-ink-tertiary)", textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 10 }}>
+                  Prag incredere
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                  <SliderPrimitive.Root
+                    value={[conf]}
+                    onValueChange={([v]) => setConf(v)}
+                    min={0.05}
+                    max={0.95}
+                    step={0.05}
+                    style={{ position: "relative", display: "flex", alignItems: "center", flex: 1, height: 20, userSelect: "none", touchAction: "none" }}
+                  >
+                    <SliderPrimitive.Track style={{ position: "relative", height: 3, width: "100%", borderRadius: 9999, background: "var(--color-surface-inset)", flexGrow: 1 }}>
+                      <SliderPrimitive.Range style={{ position: "absolute", height: "100%", borderRadius: 9999, background: "var(--color-leaf)" }} />
+                    </SliderPrimitive.Track>
+                    <SliderPrimitive.Thumb style={{ display: "block", width: 16, height: 16, borderRadius: "50%", background: "white", border: "2px solid var(--color-leaf)", boxShadow: "0 1px 3px rgba(0,0,0,0.12)", cursor: "pointer", outline: "none" }} />
+                  </SliderPrimitive.Root>
+                  <span style={{ fontSize: 13, fontWeight: 500, color: "var(--color-ink)", fontFamily: "var(--font-body)", minWidth: 36, textAlign: "right" }}>
+                    {Math.round(conf * 100)}%
+                  </span>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* Modality — popover below */}
+        <div style={{ position: "relative" }}>
+          <button
+            style={toolbarBtnStyle(openPopover === "modality")}
+            onClick={() => setOpenPopover(openPopover === "modality" ? null : "modality")}
+          >
+            <ScanLine size={13} />
+            {modality}
+          </button>
+          {openPopover === "modality" && (
+            <>
+              <div style={{ position: "fixed", inset: 0, zIndex: 40 }} onClick={() => setOpenPopover(null)} />
+              <div style={{
+                position: "absolute",
+                top: "calc(100% + 6px)",
+                left: 0,
+                background: "var(--color-surface)",
+                border: "1px solid var(--border-emphasis)",
+                borderRadius: 10,
+                boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
+                padding: 4,
+                zIndex: 50,
+                minWidth: 140,
+              }}>
+                {["Auto", "Bitewing", "Panoramic"].map(v => (
+                  <button
+                    key={v}
+                    onClick={() => { setModality(v); setOpenPopover(null); }}
+                    style={dropdownItemStyle(modality === v)}
+                    onMouseEnter={(e) => { if (modality !== v) e.currentTarget.style.background = "var(--color-surface-hover)"; }}
+                    onMouseLeave={(e) => { if (modality !== v) e.currentTarget.style.background = "transparent"; }}
+                  >
+                    {v}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* Tooth assignment toggle */}
+        <button
+          onClick={() => setToothAssign(!toothAssign)}
+          style={toolbarBtnStyle(toothAssign)}
+          title="Atribuire dinte"
+        >
+          <Waypoints size={13} />
+          Dinte
+        </button>
+      </div>
+
+      {/* Error */}
+      {error && (
+        <div style={{ color: "var(--color-high)", fontWeight: 500, fontSize: 13, marginBottom: 12, width: "100%" }}>
+          {error}
+        </div>
+      )}
+
+      {/* Results */}
+      {result && (
+        <div style={{ width: "100%" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
+            <span style={{ fontSize: 13, color: "var(--color-ink-tertiary)" }}>
+              {result.model_name} &middot; {result.modality} &middot; {result.num_detections} {result.num_detections === 1 ? "detectie" : "detectii"} &middot; {result.turnaround_s}s
+            </span>
+          </div>
+          <FindingsTable detections={result.detections} />
+        </div>
+      )}
+    </div>
+  );
+}

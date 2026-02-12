@@ -172,3 +172,18 @@ datasets/
 
 # Keep source YAMLs tracked, ignore only generated configs
 runs/**/*.yaml
+
+# Node
+node_modules/
+
+# Claude Code / Agent
+.agent/
+.agents/
+.claude/
+
+# Misc
+nul
+
+# Backend data
+web/backend/data/
+web/backend/static/results/

@@ -1,5 +1,7 @@
 import streamlit as st
 import os
+import glob
+import logging
 import subprocess
 import tempfile
 import zipfile
@@ -8,22 +10,343 @@ import sys
 import numpy as np
 from PIL import Image
 from streamlit_drawable_canvas import st_canvas
-from scripts.dataset_explorer import load_dataset, compute_dataset_stats, get_sample_images, draw_annotations
+from scripts.dataset_explorer import (
+    load_dataset,
+    compute_dataset_stats,
+    get_sample_images,
+    draw_annotations,
+)
 
 sys.path.append("scripts")
 from preprocessing import YOLODataPreprocessor
-from scripts.dataset_explorer import load_dataset, compute_dataset_stats, get_sample_images, draw_annotations
+from scripts.dataset_explorer import (
+    load_dataset,
+    compute_dataset_stats,
+    get_sample_images,
+    draw_annotations,
+)
 
 # Page config
 st.set_page_config(page_title="YOLO Training Template", page_icon="🚀", layout="wide")
 
+
+def discover_trained_models():
+    """Discover trained model checkpoints in common output directories."""
+    patterns = [
+        "runs/detect/runs/dental/*/weights/best.pt",
+        "runs/train/*/weights/best.pt",
+    ]
+    found_paths = []
+    for pattern in patterns:
+        found_paths.extend(glob.glob(pattern))
+
+    unique_paths = []
+    seen = set()
+    for path in sorted(found_paths, key=os.path.getmtime, reverse=True):
+        norm_path = os.path.normpath(path)
+        if norm_path not in seen:
+            seen.add(norm_path)
+            unique_paths.append(norm_path)
+
+    options = []
+    for path in unique_paths:
+        run_name = "unknown_run"
+        if "weights" in path:
+            run_name = os.path.basename(os.path.dirname(os.path.dirname(path)))
+        label = f"{run_name} ({path})"
+        options.append((label, path))
+
+    return options
+
+
+def discover_example_images(limit=60):
+    """Discover prediction preview images from validation/training runs."""
+    patterns = [
+        "runs/detect/runs/dental/*/val_batch*_pred.jpg",
+        "runs/detect/val*/val_batch*_pred.jpg",
+    ]
+    found = []
+    for pattern in patterns:
+        found.extend(glob.glob(pattern))
+
+    found = sorted(found, key=os.path.getmtime, reverse=True)
+    return [os.path.normpath(path) for path in found[:limit]]
+
+
 # Sidebar navigation
 st.sidebar.title("YOLO Training Template")
 page = st.sidebar.radio(
-    "Select Page", ["Training", "Inference", "Preprocessing", "Dataset Explorer", "Auto-labeling", "Export"]
+    "Select Page",
+    [
+        "Caries Screening",
+        "Clinical Demo",
+        "Training",
+        "Inference",
+        "Preprocessing",
+        "Dataset Explorer",
+        "Auto-labeling",
+        "Export",
+    ],
 )
 
-if page == "Training":
+if page == "Caries Screening":
+    from dentist_ui.styles import inject_css
+    from dentist_ui.state import (
+        init_state, record_scan, get_daily_stats, get_scan_history,
+        get_settings, update_settings,
+    )
+    from dentist_ui.inference import run_analysis
+    from dentist_ui.components import (
+        render_disclaimer, render_stat_cards, render_verdict_card,
+        render_model_selector, render_upload_area, render_examples_gallery,
+        render_scan_history, render_settings,
+    )
+
+    init_state()
+    inject_css()
+
+    st.title("Caries Screening")
+    render_disclaimer()
+
+    sub_page = st.radio(
+        "Section",
+        ["Dashboard", "Analyze Scan", "Patients", "Examples", "Settings"],
+        horizontal=True,
+        label_visibility="collapsed",
+    )
+
+    if sub_page == "Dashboard":
+        stats = get_daily_stats()
+        render_stat_cards(stats["total"], stats["high"], stats["review"],
+                          stats["avg_turnaround"])
+        st.markdown("---")
+        st.subheader("Recent Scans")
+        history = get_scan_history()
+        render_scan_history(history[-10:][::-1] if history else [])
+
+    elif sub_page == "Analyze Scan":
+        settings = get_settings()
+        model_path, _source = render_model_selector()
+        uploaded_images = render_upload_area()
+
+        if st.button("Analyze X-ray", type="primary"):
+            if not uploaded_images:
+                st.error("Please upload at least one image.")
+                st.stop()
+            if not model_path:
+                st.error("Please select or upload a model first.")
+                st.stop()
+
+            for img_file in uploaded_images:
+                try:
+                    import time as _time
+                    _t0 = _time.time()
+                    image = Image.open(img_file).convert("RGB")
+                    img_array = np.array(image)
+
+                    result = run_analysis(
+                        img_array,
+                        model_path,
+                        conf_threshold=settings["conf"],
+                        modality=settings["modality"],
+                        use_tooth_assignment=settings["tooth_assign"],
+                    )
+                    elapsed = _time.time() - _t0
+
+                    render_verdict_card(
+                        img_file.name,
+                        result["suspicion_level"],
+                        result["overall_confidence"],
+                        result["annotated_image"],
+                        result["detections"],
+                        result["tooth_predictions"],
+                        result["modality"],
+                    )
+
+                    record_scan(
+                        filename=img_file.name,
+                        suspicion_level=result["suspicion_level"],
+                        confidence=result["overall_confidence"],
+                        num_detections=result["num_detections"],
+                        modality=result["modality"],
+                        turnaround=elapsed,
+                    )
+                except Exception as e:
+                    st.error(f"Analysis failed for {img_file.name}: {e}")
+
+    elif sub_page == "Patients":
+        st.subheader("Scan History")
+        render_scan_history(get_scan_history()[::-1])
+
+    elif sub_page == "Examples":
+        st.subheader("Prediction Examples")
+        render_examples_gallery()
+
+    elif sub_page == "Settings":
+        st.subheader("Screening Settings")
+        settings = get_settings()
+        new_settings = render_settings(settings)
+        update_settings(**new_settings)
+
+        st.markdown("---")
+        if st.button("Reset daily stats"):
+            for key in ["cs_today_total", "cs_today_high", "cs_today_review",
+                        "cs_turnaround_times"]:
+                st.session_state[key] = 0 if not key.endswith("times") else []
+            st.success("Daily stats reset.")
+
+elif page == "Clinical Demo":
+    st.title("🦷 Dental Caries AI Demo")
+    st.caption(
+        "Choose a trained model, upload x-rays, and review prediction examples "
+        "for a dentist-friendly walkthrough."
+    )
+
+    demo_tab, examples_tab = st.tabs(["Upload & Predict", "Examples"])
+
+    with demo_tab:
+        st.subheader("Run Inference")
+
+        model_source = st.radio(
+            "Model Source",
+            ["Use trained model", "Upload model (.pt)"],
+            horizontal=True,
+        )
+
+        selected_model_path = None
+        uploaded_model = None
+
+        if model_source == "Use trained model":
+            model_options = discover_trained_models()
+            if not model_options:
+                st.warning(
+                    "No trained models found yet. Upload a `.pt` file or train first."
+                )
+            else:
+                labels = [item[0] for item in model_options]
+                selected_label = st.selectbox("Select model", labels)
+                selected_model_path = dict(model_options)[selected_label]
+                st.caption(f"Using: `{selected_model_path}`")
+        else:
+            uploaded_model = st.file_uploader(
+                "Upload model checkpoint",
+                type=["pt"],
+                help="Upload a YOLO checkpoint like best.pt",
+            )
+
+        uploaded_images = st.file_uploader(
+            "Upload dental image(s)",
+            type=["jpg", "jpeg", "png", "bmp", "tiff"],
+            accept_multiple_files=True,
+        )
+        conf = st.slider(
+            "Confidence Threshold",
+            min_value=0.05,
+            max_value=0.95,
+            value=0.25,
+            step=0.05,
+        )
+
+        if st.button("Run Analysis", type="primary"):
+            if not uploaded_images:
+                st.error("Please upload at least one image.")
+                st.stop()
+
+            model_path_to_use = selected_model_path
+            if model_source == "Upload model (.pt)":
+                if not uploaded_model:
+                    st.error("Please upload a model checkpoint (.pt).")
+                    st.stop()
+                with tempfile.NamedTemporaryFile(
+                    suffix=".pt", delete=False
+                ) as temp_model:
+                    temp_model.write(uploaded_model.getvalue())
+                    model_path_to_use = temp_model.name
+            elif not model_path_to_use:
+                st.error("Please select a trained model.")
+                st.stop()
+
+            try:
+                from ultralytics import YOLO
+
+                model = YOLO(model_path_to_use)
+                st.success("Model loaded. Running predictions...")
+
+                for idx, img_file in enumerate(uploaded_images, start=1):
+                    image = Image.open(img_file).convert("RGB")
+                    results = model.predict(np.array(image), conf=conf, verbose=False)
+                    plotted = results[0].plot()
+
+                    st.markdown(f"**Case {idx}: {img_file.name}**")
+                    st.image(plotted, channels="BGR", use_container_width=True)
+
+                    detections = []
+                    boxes = results[0].boxes
+                    if boxes is not None and len(boxes) > 0:
+                        names_map = results[0].names
+                        cls_ids = boxes.cls.tolist()
+                        confs = boxes.conf.tolist()
+                        for class_id, score in zip(cls_ids, confs):
+                            class_name = names_map.get(
+                                int(class_id), str(int(class_id))
+                            )
+                            detections.append(
+                                {
+                                    "class": class_name,
+                                    "confidence": round(float(score), 3),
+                                }
+                            )
+
+                    if detections:
+                        st.write(f"Findings: {len(detections)} detection(s)")
+                        st.dataframe(detections, use_container_width=True)
+                    else:
+                        st.info("No detections above threshold.")
+
+            except Exception as e:
+                st.error(f"Inference failed: {e}")
+
+    with examples_tab:
+        st.subheader("Prediction Examples")
+        st.caption(
+            "These are sample prediction outputs from prior runs to show expected "
+            "visual behavior."
+        )
+
+        example_images = discover_example_images()
+        if not example_images:
+            st.info("No example prediction images found yet.")
+        else:
+            run_names = []
+            for path in example_images:
+                parts = os.path.normpath(path).split(os.sep)
+                if "dental" in parts:
+                    run_idx = parts.index("dental") + 1
+                    run_name = parts[run_idx] if run_idx < len(parts) else "unknown"
+                else:
+                    run_name = parts[-2] if len(parts) >= 2 else "unknown"
+                run_names.append(run_name)
+
+            available_runs = sorted(set(run_names))
+            selected_run = st.selectbox("Filter by run", ["All"] + available_runs)
+
+            filtered = []
+            for path, run_name in zip(example_images, run_names):
+                if selected_run == "All" or run_name == selected_run:
+                    filtered.append((path, run_name))
+
+            show_count = st.slider(
+                "Number of examples",
+                min_value=1,
+                max_value=min(24, len(filtered)),
+                value=min(6, len(filtered)),
+            )
+
+            for i, (path, run_name) in enumerate(filtered[:show_count], start=1):
+                st.markdown(f"**Example {i} - {run_name}**")
+                st.image(path, caption=path, use_container_width=True)
+
+elif page == "Training":
     st.title("🚀 YOLO Model Training")
 
     # Dataset source
@@ -319,14 +642,18 @@ elif page == "Preprocessing":
 elif page == "Dataset Explorer":
     st.title("📊 Dataset Explorer")
 
-    mode = st.radio("Mode", ["Explore Dataset", "Manual Annotation"], help="Choose exploration or manual annotation")
+    mode = st.radio(
+        "Mode",
+        ["Explore Dataset", "Manual Annotation"],
+        help="Choose exploration or manual annotation",
+    )
 
     if mode == "Explore Dataset":
         st.markdown("### Dataset Input")
         input_method = st.radio(
             "Input Method",
             ["Upload ZIP", "Local Path"],
-            help="Choose how to provide the dataset"
+            help="Choose how to provide the dataset",
         )
 
         dataset_path = None
@@ -336,13 +663,15 @@ elif page == "Dataset Explorer":
             uploaded_file = st.file_uploader(
                 "Upload Dataset ZIP",
                 type=["zip"],
-                help="Upload a ZIP file containing images/ and labels/ directories"
+                help="Upload a ZIP file containing images/ and labels/ directories",
             )
 
             if uploaded_file:
                 # Create a persistent temp directory for this session
-                if 'dataset_temp_dir' not in st.session_state:
-                    st.session_state.dataset_temp_dir = tempfile.mkdtemp(prefix="yolo_dataset_")
+                if "dataset_temp_dir" not in st.session_state:
+                    st.session_state.dataset_temp_dir = tempfile.mkdtemp(
+                        prefix="yolo_dataset_"
+                    )
 
                 temp_dir = st.session_state.dataset_temp_dir
                 zip_path = os.path.join(temp_dir, uploaded_file.name)
@@ -351,14 +680,13 @@ elif page == "Dataset Explorer":
 
                 extract_path = os.path.join(temp_dir, "extracted")
                 os.makedirs(extract_path, exist_ok=True)
-                with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+                with zipfile.ZipFile(zip_path, "r") as zip_ref:
                     zip_ref.extractall(extract_path)
 
                 dataset_path = extract_path
         else:
             dataset_path_input = st.text_input(
-                "Dataset Path",
-                help="Path to local dataset directory"
+                "Dataset Path", help="Path to local dataset directory"
             )
             if dataset_path_input and os.path.exists(dataset_path_input):
                 dataset_path = dataset_path_input
@@ -367,10 +695,10 @@ elif page == "Dataset Explorer":
         class_names_input = st.text_input(
             "Class Names (optional)",
             placeholder="class1, class2, class3",
-            help="Comma-separated list of class names for better visualization"
+            help="Comma-separated list of class names for better visualization",
         )
         if class_names_input:
-            class_names = [name.strip() for name in class_names_input.split(',')]
+            class_names = [name.strip() for name in class_names_input.split(",")]
 
         if dataset_path:
             try:
@@ -380,7 +708,11 @@ elif page == "Dataset Explorer":
 
                 # Debug info
                 st.markdown("### Debug Info")
-                subdirs = [d for d in os.listdir(dataset_path) if os.path.isdir(os.path.join(dataset_path, d))]
+                subdirs = [
+                    d
+                    for d in os.listdir(dataset_path)
+                    if os.path.isdir(os.path.join(dataset_path, d))
+                ]
                 st.write(f"Detected subdirectories: {subdirs}")
                 st.write(f"Dataset splits found: {list(dataset_splits.keys())}")
 
@@ -390,30 +722,38 @@ elif page == "Dataset Explorer":
                     # Dataset statistics
                     st.markdown("### Dataset Statistics")
                     labels_dir = None  # Assume labels are in same structure
-                    stats = compute_dataset_stats(dataset_splits, labels_dir, class_names)
+                    stats = compute_dataset_stats(
+                        dataset_splits, labels_dir, class_names
+                    )
 
                     col1, col2, col3 = st.columns(3)
                     with col1:
-                        st.metric("Total Images", stats['total_images'])
+                        st.metric("Total Images", stats["total_images"])
                     with col2:
-                        st.metric("Total Annotations", stats['bbox_stats']['total_bboxes'])
+                        st.metric(
+                            "Total Annotations", stats["bbox_stats"]["total_bboxes"]
+                        )
                     with col3:
                         st.metric("Avg BBoxes/Image", ".2f")
 
                     # Split information
                     st.markdown("#### Split Distribution")
-                    for split, count in stats['split_counts'].items():
+                    for split, count in stats["split_counts"].items():
                         st.write(f"**{split.title()}:** {count} images")
 
                     # Class distribution
-                    if stats['class_counts']:
+                    if stats["class_counts"]:
                         st.markdown("#### Class Distribution")
                         if class_names:
-                            for class_id, count in stats['class_counts'].items():
-                                class_name = class_names[class_id] if class_id < len(class_names) else f"Class {class_id}"
+                            for class_id, count in stats["class_counts"].items():
+                                class_name = (
+                                    class_names[class_id]
+                                    if class_id < len(class_names)
+                                    else f"Class {class_id}"
+                                )
                                 st.write(f"**{class_name}:** {count}")
                         else:
-                            for class_id, count in stats['class_counts'].items():
+                            for class_id, count in stats["class_counts"].items():
                                 st.write(f"**Class {class_id}:** {count}")
 
                     # Sample images
@@ -428,19 +768,25 @@ elif page == "Dataset Explorer":
                                 sample_size=sample_size,
                                 labels_dir=labels_dir,
                                 class_names=class_names,
-                                conf_threshold=conf_threshold
+                                conf_threshold=conf_threshold,
                             )
 
                         if samples:
-                             for i, sample in enumerate(samples):
-                                 st.markdown(f"**Sample {i+1}:** {os.path.basename(sample['path'])}")
-                                 st.image(sample['image'], use_column_width=True)
-                                 if sample['bboxes']:
-                                    st.write(f"Found {len(sample['bboxes'])} annotations")
+                            for i, sample in enumerate(samples):
+                                st.markdown(
+                                    f"**Sample {i + 1}:** {os.path.basename(sample['path'])}"
+                                )
+                                st.image(sample["image"], use_column_width=True)
+                                if sample["bboxes"]:
+                                    st.write(
+                                        f"Found {len(sample['bboxes'])} annotations"
+                                    )
                         else:
                             st.warning("No sample images could be generated.")
                 else:
-                    st.error("No valid dataset structure found. Make sure your dataset contains 'images/' directories in train/val/test folders or at root level.")
+                    st.error(
+                        "No valid dataset structure found. Make sure your dataset contains 'images/' directories in train/val/test folders or at root level."
+                    )
 
             except Exception as e:
                 st.error(f"Error exploring dataset: {str(e)}")
@@ -455,11 +801,17 @@ elif page == "Dataset Explorer":
             "Upload Images",
             type=["jpg", "png", "jpeg"],
             accept_multiple_files=True,
-            help="Select multiple images to annotate"
+            help="Select multiple images to annotate",
         )
 
-        class_names_input = st.text_input("Class Names (comma-separated)", placeholder="class1, class2")
-        class_names = [name.strip() for name in class_names_input.split(',')] if class_names_input else []
+        class_names_input = st.text_input(
+            "Class Names (comma-separated)", placeholder="class1, class2"
+        )
+        class_names = (
+            [name.strip() for name in class_names_input.split(",")]
+            if class_names_input
+            else []
+        )
 
         if uploaded_images and class_names:
             # Select image
@@ -479,17 +831,19 @@ elif page == "Dataset Explorer":
                     label_file_name = f"{selected_image.rsplit('.', 1)[0]}.txt"
                     st.session_state[session_key] = []
                     if os.path.exists(label_file_name):
-                        with open(label_file_name, 'r') as f:
+                        with open(label_file_name, "r") as f:
                             for line in f:
                                 parts = line.strip().split()
                                 if len(parts) == 5:
-                                    st.session_state[session_key].append({
-                                        'class_id': int(parts[0]),
-                                        'x': float(parts[1]),
-                                        'y': float(parts[2]),
-                                        'w': float(parts[3]),
-                                        'h': float(parts[4])
-                                    })
+                                    st.session_state[session_key].append(
+                                        {
+                                            "class_id": int(parts[0]),
+                                            "x": float(parts[1]),
+                                            "y": float(parts[2]),
+                                            "w": float(parts[3]),
+                                            "h": float(parts[4]),
+                                        }
+                                    )
                 if canvas_counter_key not in st.session_state:
                     st.session_state[canvas_counter_key] = 0
 
@@ -499,30 +853,42 @@ elif page == "Dataset Explorer":
                 bboxes_for_draw = []
                 height, width = img_array.shape[:2]
                 for ann in existing_annotations:
-                    x_center = ann['x'] * width
-                    y_center = ann['y'] * height
-                    w = ann['w'] * width
-                    h = ann['h'] * height
+                    x_center = ann["x"] * width
+                    y_center = ann["y"] * height
+                    w = ann["w"] * width
+                    h = ann["h"] * height
                     x1 = int(x_center - w / 2)
                     y1 = int(y_center - h / 2)
                     x2 = int(x_center + w / 2)
                     y2 = int(y_center + h / 2)
-                    bboxes_for_draw.append({
-                        'class_id': ann['class_id'],
-                        'bbox': (x1, y1, x2, y2),
-                        'confidence': 1.0
-                    })
+                    bboxes_for_draw.append(
+                        {
+                            "class_id": ann["class_id"],
+                            "bbox": (x1, y1, x2, y2),
+                            "confidence": 1.0,
+                        }
+                    )
 
                 # Display image with current annotations
-                annotated_img = draw_annotations(img_array, bboxes_for_draw, class_names)
-                st.image(Image.fromarray(annotated_img), caption=f"Current annotations: {len(existing_annotations)} bboxes", use_column_width=True)
+                annotated_img = draw_annotations(
+                    img_array, bboxes_for_draw, class_names
+                )
+                st.image(
+                    Image.fromarray(annotated_img),
+                    caption=f"Current annotations: {len(existing_annotations)} bboxes",
+                    use_column_width=True,
+                )
 
                 # Add new bbox with mouse
                 st.markdown("#### Add New Bounding Box")
-                new_class = st.selectbox("Select Class for New Box", class_names, key="new_class")
+                new_class = st.selectbox(
+                    "Select Class for New Box", class_names, key="new_class"
+                )
 
                 # Canvas for drawing
-                canvas_key = f"canvas_{selected_image}_{st.session_state[canvas_counter_key]}"
+                canvas_key = (
+                    f"canvas_{selected_image}_{st.session_state[canvas_counter_key]}"
+                )
                 canvas_result = st_canvas(
                     fill_color="rgba(255, 165, 0, 0.3)",  # Orange fill with transparency
                     stroke_width=2,
@@ -538,29 +904,35 @@ elif page == "Dataset Explorer":
                 )
 
                 if st.button("Add Drawn Box"):
-                    if canvas_result and canvas_result.json_data and 'objects' in canvas_result.json_data:
-                        objects = canvas_result.json_data['objects']
+                    if (
+                        canvas_result
+                        and canvas_result.json_data
+                        and "objects" in canvas_result.json_data
+                    ):
+                        objects = canvas_result.json_data["objects"]
                         img_width, img_height = image.size  # PIL is (width, height)
                         added_count = 0
                         for obj in objects:
-                            if obj['type'] == 'rect':
-                                left = float(obj['left'])
-                                top = float(obj['top'])
-                                width = float(obj['width'])
-                                height = float(obj['height'])
+                            if obj["type"] == "rect":
+                                left = float(obj["left"])
+                                top = float(obj["top"])
+                                width = float(obj["width"])
+                                height = float(obj["height"])
                                 # Convert to normalized YOLO format
                                 x_center = (left + width / 2) / img_width
                                 y_center = (top + height / 2) / img_height
                                 w_norm = width / img_width
                                 h_norm = height / img_height
                                 class_id = class_names.index(new_class)
-                                st.session_state[session_key].append({
-                                    'class_id': class_id,
-                                    'x': x_center,
-                                    'y': y_center,
-                                    'w': w_norm,
-                                    'h': h_norm
-                                })
+                                st.session_state[session_key].append(
+                                    {
+                                        "class_id": class_id,
+                                        "x": x_center,
+                                        "y": y_center,
+                                        "w": w_norm,
+                                        "h": h_norm,
+                                    }
+                                )
                                 added_count += 1
                         if added_count > 0:
                             st.success(f"Added {added_count} bounding box(es)!")
@@ -574,23 +946,36 @@ elif page == "Dataset Explorer":
                 # List current annotations
                 st.markdown("#### Current Annotations")
                 for i, ann in enumerate(existing_annotations):
-                    class_name = class_names[ann['class_id']] if ann['class_id'] < len(class_names) else f"Class {ann['class_id']}"
-                    st.write(f"{i+1}. {class_name}: x={ann['x']:.3f}, y={ann['y']:.3f}, w={ann['w']:.3f}, h={ann['h']:.3f}")
-                    if st.button(f"Remove {i+1}", key=f"remove_{i}"):
+                    class_name = (
+                        class_names[ann["class_id"]]
+                        if ann["class_id"] < len(class_names)
+                        else f"Class {ann['class_id']}"
+                    )
+                    st.write(
+                        f"{i + 1}. {class_name}: x={ann['x']:.3f}, y={ann['y']:.3f}, w={ann['w']:.3f}, h={ann['h']:.3f}"
+                    )
+                    if st.button(f"Remove {i + 1}", key=f"remove_{i}"):
                         st.session_state[session_key].pop(i)
                         st.rerun()
 
                 if st.button("Save Annotations"):
                     # Save to txt file
                     label_file_name = f"{selected_image.rsplit('.', 1)[0]}.txt"
-                    annotations_lines = [f"{ann['class_id']} {ann['x']:.6f} {ann['y']:.6f} {ann['w']:.6f} {ann['h']:.6f}" for ann in st.session_state[session_key]]
+                    annotations_lines = [
+                        f"{ann['class_id']} {ann['x']:.6f} {ann['y']:.6f} {ann['w']:.6f} {ann['h']:.6f}"
+                        for ann in st.session_state[session_key]
+                    ]
                     with open(label_file_name, "w") as f:
                         f.write("\n".join(annotations_lines))
-                    st.success(f"Annotations saved to {label_file_name} ({len(st.session_state[session_key])} bboxes)")
+                    st.success(
+                        f"Annotations saved to {label_file_name} ({len(st.session_state[session_key])} bboxes)"
+                    )
 
     # Clear dataset button
     if st.button("Clear Uploaded Dataset"):
-        if 'dataset_temp_dir' in st.session_state and os.path.exists(st.session_state.dataset_temp_dir):
+        if "dataset_temp_dir" in st.session_state and os.path.exists(
+            st.session_state.dataset_temp_dir
+        ):
             shutil.rmtree(st.session_state.dataset_temp_dir)
             del st.session_state.dataset_temp_dir
         st.success("Uploaded dataset cleared.")
@@ -615,22 +1000,30 @@ elif page == "Export":
         # Run export
         try:
             from ultralytics import YOLO
+
             model = YOLO(model_path)
             if export_format == "NCNN":
-                exported_path = model.export(format='ncnn')
+                exported_path = model.export(format="ncnn")
                 st.success("Model exported to NCNN!")
                 # Zip the output directory
                 if os.path.exists(exported_path):
                     zip_path = "exported_model.zip"
-                    with zipfile.ZipFile(zip_path, 'w') as zipf:
+                    with zipfile.ZipFile(zip_path, "w") as zipf:
                         if os.path.isdir(exported_path):
                             for root, dirs, files in os.walk(exported_path):
                                 for file in files:
-                                    zipf.write(os.path.join(root, file), os.path.relpath(os.path.join(root, file), exported_path))
+                                    zipf.write(
+                                        os.path.join(root, file),
+                                        os.path.relpath(
+                                            os.path.join(root, file), exported_path
+                                        ),
+                                    )
                         else:
                             zipf.write(exported_path, os.path.basename(exported_path))
                     with open(zip_path, "rb") as f:
-                        st.download_button("Download Exported Model", f, file_name="model_ncnn.zip")
+                        st.download_button(
+                            "Download Exported Model", f, file_name="model_ncnn.zip"
+                        )
                 else:
                     st.error("Export failed: output not found.")
         except Exception as e:
@@ -670,4 +1063,3 @@ elif page == "Auto-labeling":
         else:
             st.error("Auto-labeling failed!")
             st.text_area("Error", result.stderr, height=200)
-
