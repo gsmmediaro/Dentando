@@ -435,6 +435,27 @@ export default function AnalyzeScan() {
           <Waypoints size={13} />
           Tooth
         </button>
+
+        {file && (
+          <button
+            onClick={handleAnalyze}
+            disabled={loading}
+            style={{
+              ...toolbarBtnStyle(false),
+              background: loading ? "var(--color-surface-inset)" : "var(--color-leaf)",
+              color: loading ? "var(--color-ink-tertiary)" : "white",
+              border: "none",
+              fontWeight: 600,
+            }}
+          >
+            {loading ? (
+              <>
+                <Loader2 size={13} className="animate-spin" />
+                Analyzing...
+              </>
+            ) : result ? "Analyze again" : "Analyze"}
+          </button>
+        )}
       </div>
 
       {/* Error */}
@@ -447,11 +468,6 @@ export default function AnalyzeScan() {
       {/* Results */}
       {result && (
         <div style={{ width: "100%" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
-            <span style={{ fontSize: 13, color: "var(--color-ink-tertiary)" }}>
-               {result.model_name} &middot; {result.modality} &middot; {result.num_detections} {result.num_detections === 1 ? "detection" : "detections"} &middot; {result.turnaround_s}s
-            </span>
-          </div>
           <FindingsTable detections={result.detections} />
         </div>
       )}
