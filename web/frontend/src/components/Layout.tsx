@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Plus, BarChart3, Users, LogOut, ChevronRight, ChevronLeft } from "lucide-react";
 import { getPatientsFromFirestore, getPatientScansFromFirestore, type PatientSummary, type ScanRecord } from "../api/client";
 import { useAuth } from "../contexts/AuthContext";
+import quinnLogo from "../../../../quinnnlogo.svg";
 
 function suspicionDotColor(s: string): string {
   switch (s) {
@@ -105,19 +106,16 @@ export default function Layout({ children, onSelectPatient }: Props) {
           fontWeight: 500,
           color: "var(--color-ink)",
         }}>
-          <div style={{
-            width: 28,
-            height: 28,
-            background: "var(--color-leaf)",
-            borderRadius: 6,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}>
-            <svg width="14" height="14" fill="none" stroke="white" strokeWidth="2" viewBox="0 0 24 24">
-              <path d="M12 2L2 7l10 5 10-5-10-5z" /><path d="M2 17l10 5 10-5" /><path d="M2 12l10 5 10-5" />
-            </svg>
-          </div>
+          <img
+            src={quinnLogo}
+            alt="Quinn logo"
+            style={{
+              width: 28,
+              height: 28,
+              display: "block",
+              flexShrink: 0,
+            }}
+          />
           Quinn
         </div>
 

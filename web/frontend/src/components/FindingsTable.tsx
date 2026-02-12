@@ -4,6 +4,7 @@ const thStyle: React.CSSProperties = {
   textAlign: "left",
   padding: "12px 16px",
   fontWeight: 500,
+  fontFamily: "var(--font-display)",
   color: "var(--color-ink-tertiary)",
   fontSize: 11,
   textTransform: "uppercase",

@@ -1,5 +1,12 @@
 @import "tailwindcss";
 
+@font-face {
+  font-family: "Exposure Trial";
+  src: url("../../../../._ExposureTrial[+20].otf") format("opentype");
+  font-weight: 400;
+  font-style: normal;
+}
+
 @theme {
   /* Surfaces — warm parchment */
   --color-bg: #f5f3ee;
@@ -37,7 +44,11 @@
 
   /* Fonts */
   --font-body: 'Inter', system-ui, -apple-system, sans-serif;
-  --font-display: 'Newsreader', Georgia, 'Times New Roman', serif;
+  --font-display: 'Exposure Trial', 'Newsreader', Georgia, 'Times New Roman', serif;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
 }
 
 /* Borders — whisper-quiet warm (CSS vars, not theme tokens) */

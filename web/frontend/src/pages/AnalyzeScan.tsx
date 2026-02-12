@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
-import { Upload, X, Loader2, Layers, Gauge, ScanLine, Waypoints } from "lucide-react";
+import { Upload, X, Loader2, Layers, Gauge, Waypoints } from "lucide-react";
 import * as SelectPrimitive from "@radix-ui/react-select";
 import * as SliderPrimitive from "@radix-ui/react-slider";
 import { analyzeImage, getModels, saveScanToFirestore, type AnalysisResult, type ModelInfo } from "../api/client";
@@ -11,9 +11,8 @@ const ACCEPT = ".jpg,.jpeg,.png,.bmp,.tiff,.tif";
 export default function AnalyzeScan() {
   const { user } = useAuth();
   const [models, setModels] = useState<ModelInfo[]>([]);
-  const [selectedModel, setSelectedModel] = useState("auto");
+  const [selectedModel, setSelectedModel] = useState("");
   const [conf, setConf] = useState(0.5);
-  const [modality, setModality] = useState("Auto");
   const [toothAssign, setToothAssign] = useState(false);
   const [patientName, setPatientName] = useState("");
   const [file, setFile] = useState<File | null>(null);
@@ -32,6 +31,17 @@ export default function AnalyzeScan() {
         setError("Could not load models. Check backend URL/CORS settings.");
       });
   }, []);
+
+  useEffect(() => {
+    if (!models.length || selectedModel) return;
+
+    const preferred = models.find((m) => {
+      const raw = `${m.name} ${m.path}`.toLowerCase();
+      return raw.includes("pano_gpu2") || raw.includes("pano_caries_only_gpu2");
+    });
+
+    setSelectedModel(preferred?.path || models[0].path);
+  }, [models, selectedModel]);
 
   useEffect(() => {
     if (!file) { setPreview(null); return; }
@@ -64,12 +74,19 @@ export default function AnalyzeScan() {
   };
 
   const handleAnalyze = async () => {
-    if (!file) return;
+    if (!file || !selectedModel) return;
     setLoading(true);
     setError("");
     setResult(null);
     try {
-      const res = await analyzeImage(file, selectedModel, conf, modality, toothAssign, patientName);
+      const res = await analyzeImage(
+        file,
+        selectedModel,
+        conf,
+        selectedModel.toLowerCase().includes("bitewing") ? "Bitewing" : "Panoramic",
+        toothAssign,
+        patientName,
+      );
       setResult(res);
       // Save to Firestore
       if (user) {
@@ -91,18 +108,32 @@ export default function AnalyzeScan() {
   };
 
   const MODEL_DISPLAY: Record<string, string> = {
+    "pano_gpu2": "Panoramic",
     "pano_caries_only_gpu2": "Panoramic",
-    "pano_caries_only": "Avocado",
-    "pano_caries_roboflow_v1": "Kiwi",
+    "bitewing": "Bitewing",
     "bitewing_caries_only": "Bitewing",
+    "potato": "Kiwi",
+    "pano_dc1000_potato": "Kiwi",
   };
 
-  const modelOptions = useMemo(() => [
-    { value: "auto", label: "Auto" },
-    ...models.map(m => ({ value: m.path, label: MODEL_DISPLAY[m.name] || m.name }))
-  ], [models]);
+  const modelOptions = useMemo(() => (
+    models.map((m) => {
+      const raw = m.name.toLowerCase();
+      const path = m.path.toLowerCase();
 
-  const currentModelLabel = modelOptions.find(o => o.value === selectedModel)?.label || "Auto";
+      let label = m.name;
+      for (const [key, value] of Object.entries(MODEL_DISPLAY)) {
+        if (raw.includes(key) || path.includes(key)) {
+          label = value;
+          break;
+        }
+      }
+
+      return { value: m.path, label };
+    })
+  ), [models]);
+
+  const currentModelLabel = modelOptions.find((o) => o.value === selectedModel)?.label || "Panoramic";
 
   const toolbarBtnStyle = (active: boolean = false): React.CSSProperties => ({
     display: "flex",
@@ -118,22 +149,6 @@ export default function AnalyzeScan() {
     background: active ? "var(--color-leaf-subtle)" : "var(--color-surface)",
     color: active ? "var(--color-leaf-text)" : "var(--color-ink-secondary)",
     fontFamily: "var(--font-body)",
-  });
-
-  const dropdownItemStyle = (isActive: boolean): React.CSSProperties => ({
-    padding: "7px 12px",
-    fontSize: 13,
-    borderRadius: 6,
-    border: "none",
-    cursor: "pointer",
-    textAlign: "left" as const,
-    fontFamily: "var(--font-body)",
-    background: isActive ? "var(--color-leaf-subtle)" : "transparent",
-    color: isActive ? "var(--color-leaf-text)" : "var(--color-ink)",
-    fontWeight: isActive ? 500 : 400,
-    width: "100%",
-    display: "block",
-    transition: "background 0.1s",
   });
 
   return (
@@ -360,7 +375,7 @@ export default function AnalyzeScan() {
                 zIndex: 50,
                 width: 220,
               }}>
-                <div style={{ fontSize: 11, fontWeight: 500, color: "var(--color-ink-tertiary)", textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 10 }}>
+                <div style={{ fontSize: 11, fontWeight: 500, color: "var(--color-ink-tertiary)", textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 10, fontFamily: "var(--font-display)" }}>
                   Confidence threshold
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
@@ -381,46 +396,6 @@ export default function AnalyzeScan() {
                     {Math.round(conf * 100)}%
                   </span>
                 </div>
-              </div>
-            </>
-          )}
-        </div>
-
-        {/* Modality — popover below */}
-        <div style={{ position: "relative" }}>
-          <button
-            style={toolbarBtnStyle(openPopover === "modality")}
-            onClick={() => setOpenPopover(openPopover === "modality" ? null : "modality")}
-          >
-            <ScanLine size={13} />
-            {modality}
-          </button>
-          {openPopover === "modality" && (
-            <>
-              <div style={{ position: "fixed", inset: 0, zIndex: 40 }} onClick={() => setOpenPopover(null)} />
-              <div style={{
-                position: "absolute",
-                top: "calc(100% + 6px)",
-                left: 0,
-                background: "var(--color-surface)",
-                border: "1px solid var(--border-emphasis)",
-                borderRadius: 10,
-                boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
-                padding: 4,
-                zIndex: 50,
-                minWidth: 140,
-              }}>
-                {["Auto", "Bitewing", "Panoramic"].map(v => (
-                  <button
-                    key={v}
-                    onClick={() => { setModality(v); setOpenPopover(null); }}
-                    style={dropdownItemStyle(modality === v)}
-                    onMouseEnter={(e) => { if (modality !== v) e.currentTarget.style.background = "var(--color-surface-hover)"; }}
-                    onMouseLeave={(e) => { if (modality !== v) e.currentTarget.style.background = "transparent"; }}
-                  >
-                    {v}
-                  </button>
-                ))}
               </div>
             </>
           )}

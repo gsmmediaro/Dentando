@@ -62,7 +62,7 @@ export default function Dashboard() {
         width: "100%",
         marginBottom: 16,
       }}>
-        <span style={{ fontWeight: 500 }}>Recent scans</span>
+        <span style={{ fontWeight: 500, fontFamily: "var(--font-display)" }}>Recent scans</span>
         <Link
           to="/analyze"
           style={{
@@ -102,6 +102,7 @@ export default function Dashboard() {
                   fontSize: 11,
                   textTransform: "uppercase",
                   letterSpacing: "0.06em",
+                  fontFamily: "var(--font-display)",
                   borderBottom: "1px solid var(--border-color)",
                 }}>
                   {h}

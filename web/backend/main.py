@@ -20,10 +20,12 @@ LOGGER = logging.getLogger(__name__)
 # Friendly display names for models
 MODEL_DISPLAY_NAMES: dict[str, str] = {
     "pano_caries_only_gpu2": "Panoramic",
-    "pano_caries_only": "Avocado",
-    "pano_caries_roboflow_v1": "Kiwi",
+    "pano_gpu2": "Panoramic",
     "bitewing_caries_only": "Bitewing",
-    "pano_dc1000_potato": "Potato",
+    "bitewing": "Bitewing",
+    "pano_caries_roboflow_v1": "Kiwi",
+    "pano_dc1000_potato": "Kiwi",
+    "potato": "Kiwi",
 }
 
 
