@@ -165,10 +165,17 @@ weights/
 data/
 dataset/
 datasets/
+DC1000_dataset/
+DentalPanoramicXrays/
 *.zip
 *.7z
 *.tar
 *.gz
+
+# Large image/label files (safety net)
+*.dcm
+*.nii
+*.nii.gz
 
 # Keep source YAMLs tracked, ignore only generated configs
 runs/**/*.yaml
@@ -183,6 +190,11 @@ node_modules/
 
 # Misc
 nul
+*.jpeg
+*.JPEG
+
+# Personal images
+radiografie*.jpeg
 
 # Backend data
 web/backend/data/

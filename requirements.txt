@@ -1,5 +1,5 @@
+opencv-python-headless>=4.6.0
 ultralytics
-opencv-python-headless
 kagglehub
 matplotlib
 albumentations>=1.3.0
@@ -8,3 +8,6 @@ pillow>=9.0.0
 streamlit==1.28.0
 plotly
 streamlit-drawable-canvas-jsretry
+fastapi
+uvicorn[standard]
+python-multipart

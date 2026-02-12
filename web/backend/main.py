@@ -20,6 +20,7 @@ MODEL_DISPLAY_NAMES: dict[str, str] = {
     "pano_caries_only": "Avocado",
     "pano_caries_roboflow_v1": "Kiwi",
     "bitewing_caries_only": "Bitewing",
+    "pano_dc1000_potato": "Potato",
 }
 
 
