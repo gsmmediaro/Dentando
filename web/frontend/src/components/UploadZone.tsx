@@ -31,7 +31,7 @@ export default function UploadZone({ onFile }: { onFile: (file: File) => void })
           <line x1="12" y1="3" x2="12" y2="15" />
         </svg>
       </div>
-      <div className="upload-label">Trage o radiografie dentara aici, sau apasa pentru a selecta</div>
+      <div className="upload-label">Drag a dental X-ray here, or click to select</div>
       <div className="upload-hint">JPG, PNG, BMP, TIFF</div>
       <input ref={inputRef} type="file" accept={ACCEPT} hidden onChange={(e) => { const f = e.target.files?.[0]; if (f) onFile(f); }} />
     </div>

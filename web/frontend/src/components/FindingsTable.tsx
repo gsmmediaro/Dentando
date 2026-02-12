@@ -19,7 +19,7 @@ const tdStyle: React.CSSProperties = {
 
 export default function FindingsTable({ detections }: { detections: Detection[] }) {
   if (detections.length === 0) {
-    return <p style={{ color: "var(--color-ink-tertiary)", fontSize: 13 }}>Nicio detectie gasita.</p>;
+    return <p style={{ color: "var(--color-ink-tertiary)", fontSize: 13 }}>No detections found.</p>;
   }
 
   return (
@@ -33,9 +33,9 @@ export default function FindingsTable({ detections }: { detections: Detection[] 
       <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
         <thead>
           <tr>
-            <th style={thStyle}>Clasa</th>
-            <th style={thStyle}>Incredere</th>
-            <th style={thStyle}>Locatie</th>
+            <th style={thStyle}>Class</th>
+            <th style={thStyle}>Confidence</th>
+            <th style={thStyle}>Location</th>
           </tr>
         </thead>
         <tbody>

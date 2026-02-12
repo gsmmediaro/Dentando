@@ -6,17 +6,17 @@ import { db } from "../firebase";
 import { useAuth } from "../contexts/AuthContext";
 
 const SPECIALITIES = [
-  "Dentist generalist",
-  "Ortodont",
-  "Endodont",
-  "Chirurg oral",
-  "Pedodont",
-  "Periodontolog",
-  "Prosthodont",
-  "Altele",
+  "General dentist",
+  "Orthodontist",
+  "Endodontist",
+  "Oral surgeon",
+  "Pediatric dentist",
+  "Periodontist",
+  "Prosthodontist",
+  "Other",
 ];
 
-const ROLES = ["Fondator", "Dentist", "Asistent", "Manager", "Altele"];
+const ROLES = ["Founder", "Dentist", "Assistant", "Manager", "Other"];
 const ORG_SIZES = ["Solo", "2-5", "6-10", "10+"];
 
 const inputStyle: React.CSSProperties = {
@@ -135,20 +135,20 @@ function TermsContent() {
   const p: React.CSSProperties = { fontSize: 13, color: "var(--color-ink-secondary)", marginBottom: 12, lineHeight: 1.65 };
   return (
     <>
-      <h2 style={h2}>1. Acceptarea termenilor</h2>
-      <p style={p}>Prin utilizarea platformei DentalAI, acceptati acesti termeni si conditii in totalitate. Daca nu sunteti de acord cu oricare dintre aceste prevederi, va rugam sa nu utilizati platforma.</p>
-      <h2 style={h2}>2. Descrierea serviciului</h2>
-      <p style={p}>DentalAI este un instrument de suport bazat pe inteligenta artificiala, conceput pentru a asista profesionistii din domeniul stomatologic in analiza radiografiilor dentare. Platforma nu inlocuieste diagnosticul clinic profesional.</p>
-      <h2 style={h2}>3. Utilizarea corecta</h2>
-      <p style={p}>Rezultatele furnizate de platforma sunt orientative si trebuie validate de un profesionist calificat. Utilizatorul este responsabil pentru toate deciziile clinice luate pe baza informatiilor furnizate de platforma.</p>
-      <h2 style={h2}>4. Contul de utilizator</h2>
-      <p style={p}>Sunteti responsabil pentru mentinerea confidentialitatii contului si parolei dumneavoastra. Orice activitate efectuata prin contul dumneavoastra este responsabilitatea dumneavoastra.</p>
-      <h2 style={h2}>5. Perioada de proba</h2>
-      <p style={p}>Noii utilizatori beneficiaza de o perioada de proba gratuita de 7 zile. Dupa expirarea perioadei de proba, accesul la functiile premium poate fi restrictionat.</p>
-      <h2 style={h2}>6. Limitarea responsabilitatii</h2>
-      <p style={p}>DentalAI nu isi asuma responsabilitatea pentru deciziile clinice luate pe baza rezultatelor platformei. Serviciul este furnizat "ca atare", fara garantii de niciun fel.</p>
-      <h2 style={h2}>7. Modificari ale termenilor</h2>
-      <p style={p}>Ne rezervam dreptul de a modifica acesti termeni in orice moment. Utilizatorii vor fi notificati prin intermediul platformei despre orice modificari semnificative.</p>
+      <h2 style={h2}>1. Acceptance of terms</h2>
+      <p style={p}>By using the Quinn platform, you accept these terms and conditions in full. If you do not agree with any provision, please do not use the platform.</p>
+      <h2 style={h2}>2. Service description</h2>
+      <p style={p}>Quinn is an AI-powered support tool designed to assist dental professionals in analyzing dental radiographs. The platform does not replace professional clinical diagnosis.</p>
+      <h2 style={h2}>3. Proper use</h2>
+      <p style={p}>Results provided by the platform are indicative and must be validated by a qualified professional. The user is responsible for all clinical decisions based on the information provided.</p>
+      <h2 style={h2}>4. User account</h2>
+      <p style={p}>You are responsible for keeping your account and password confidential. Any activity performed through your account is your responsibility.</p>
+      <h2 style={h2}>5. Trial period</h2>
+      <p style={p}>New users receive a 7-day free trial. After the trial period, access to premium features may be restricted.</p>
+      <h2 style={h2}>6. Limitation of liability</h2>
+      <p style={p}>Quinn is not responsible for clinical decisions made based on platform results. The service is provided "as is," without warranties of any kind.</p>
+      <h2 style={h2}>7. Changes to terms</h2>
+      <p style={p}>We reserve the right to modify these terms at any time. Users will be notified through the platform about significant changes.</p>
     </>
   );
 }
@@ -158,18 +158,18 @@ function PrivacyContent() {
   const p: React.CSSProperties = { fontSize: 13, color: "var(--color-ink-secondary)", marginBottom: 12, lineHeight: 1.65 };
   return (
     <>
-      <h2 style={h2}>1. Datele colectate</h2>
-      <p style={p}>Colectam urmatoarele date: nume, adresa de email, informatii despre organizatie, si datele radiografiilor incarcate pentru analiza. Aceste date sunt necesare pentru furnizarea serviciului.</p>
-      <h2 style={h2}>2. Utilizarea datelor</h2>
-      <p style={p}>Datele dumneavoastra sunt utilizate exclusiv pentru furnizarea si imbunatatirea serviciului DentalAI. Nu vindem si nu partajam datele personale cu terti fara consimtamantul dumneavoastra explicit.</p>
-      <h2 style={h2}>3. Stocarea datelor</h2>
-      <p style={p}>Datele sunt stocate securizat pe servere Firebase (Google Cloud). Fiecare utilizator are acces doar la propriile date. Implementam masuri de securitate adecvate pentru protejarea informatiilor.</p>
-      <h2 style={h2}>4. Datele pacientilor</h2>
-      <p style={p}>Radiografiile si datele pacientilor sunt stocate criptat si sunt accesibile doar utilizatorului care le-a incarcat. Nu utilizam datele pacientilor pentru antrenarea modelelor AI fara consimtamant explicit.</p>
-      <h2 style={h2}>5. Drepturile utilizatorului</h2>
-      <p style={p}>Aveti dreptul sa accesati, sa modificati sau sa stergeti datele dumneavoastra personale in orice moment. Pentru solicitari legate de datele personale, contactati-ne la adresa de email de suport.</p>
-      <h2 style={h2}>6. Cookie-uri</h2>
-      <p style={p}>Platforma utilizeaza cookie-uri esentiale pentru autentificare si functionarea corecta a serviciului. Nu utilizam cookie-uri de urmarire sau publicitate.</p>
+      <h2 style={h2}>1. Data collected</h2>
+      <p style={p}>We collect the following data: name, email address, organization information, and uploaded radiograph data for analysis. This data is required to provide the service.</p>
+      <h2 style={h2}>2. Data use</h2>
+      <p style={p}>Your data is used exclusively to provide and improve Quinn services. We do not sell or share personal data with third parties without your explicit consent.</p>
+      <h2 style={h2}>3. Data storage</h2>
+      <p style={p}>Data is securely stored on Firebase (Google Cloud) servers. Each user can access only their own data. We implement appropriate security measures to protect information.</p>
+      <h2 style={h2}>4. Patient data</h2>
+      <p style={p}>Radiographs and patient data are stored securely and are accessible only to the uploading user. We do not use patient data to train AI models without explicit consent.</p>
+      <h2 style={h2}>5. User rights</h2>
+      <p style={p}>You have the right to access, modify, or delete your personal data at any time. For personal data requests, contact us at our support email address.</p>
+      <h2 style={h2}>6. Cookies</h2>
+      <p style={p}>The platform uses essential cookies for authentication and proper functionality. We do not use tracking or advertising cookies.</p>
     </>
   );
 }
@@ -259,7 +259,7 @@ export default function OnboardingFlow() {
             color: "var(--color-ink)",
             margin: 0,
           }}>
-            {legalPopup === "terms" ? "Termeni si conditii" : "Politica de confidentialitate"}
+            {legalPopup === "terms" ? "Terms and Conditions" : "Privacy Policy"}
           </h3>
           <button
             onClick={() => setLegalPopup(null)}
@@ -302,21 +302,21 @@ export default function OnboardingFlow() {
           textAlign: "center",
           marginBottom: 20,
         }}>
-          Despre tine
+          About you
         </h2>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           <StyledSelect
             value={speciality}
             onValueChange={setSpeciality}
-            placeholder="Specialitate"
+            placeholder="Specialty"
             options={SPECIALITIES}
           />
 
           <StyledSelect
             value={role}
             onValueChange={setRole}
-            placeholder="Rol"
+            placeholder="Role"
             options={ROLES}
           />
 
@@ -335,21 +335,21 @@ export default function OnboardingFlow() {
               style={{ marginTop: 2, accentColor: "var(--color-leaf)", cursor: "pointer" }}
             />
             <span>
-              Sunt de acord cu{" "}
+              I agree to the{" "}
               <button
                 type="button"
                 onClick={() => setLegalPopup("terms")}
                 style={{ background: "none", border: "none", padding: 0, color: "var(--color-leaf)", textDecoration: "underline", fontWeight: 500, cursor: "pointer", fontFamily: "var(--font-body)", fontSize: 13 }}
               >
-                Termenii
+                Terms
               </button>
-              {" "}si{" "}
+              {" "}and the{" "}
               <button
                 type="button"
                 onClick={() => setLegalPopup("privacy")}
                 style={{ background: "none", border: "none", padding: 0, color: "var(--color-leaf)", textDecoration: "underline", fontWeight: 500, cursor: "pointer", fontFamily: "var(--font-body)", fontSize: 13 }}
               >
-                Politica de confidentialitate
+                Privacy Policy
               </button>
             </span>
           </div>
@@ -359,7 +359,7 @@ export default function OnboardingFlow() {
             onClick={() => setStep(1)}
             style={{ ...primaryBtnStyle, opacity: canNext0 ? 1 : 0.5, cursor: canNext0 ? "pointer" : "not-allowed", marginTop: 8 }}
           >
-            Continua
+            Continue
           </button>
         </div>
       </div>
@@ -378,13 +378,13 @@ export default function OnboardingFlow() {
           textAlign: "center",
           marginBottom: 20,
         }}>
-          Organizatia ta
+          Your organization
         </h2>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           <input
             style={inputStyle}
-            placeholder="Numele organizatiei"
+            placeholder="Organization name"
             value={orgName}
             onChange={(e) => setOrgName(e.target.value)}
             onFocus={(e) => e.currentTarget.style.borderColor = "var(--color-leaf)"}
@@ -394,7 +394,7 @@ export default function OnboardingFlow() {
           <StyledSelect
             value={orgSize}
             onValueChange={setOrgSize}
-            placeholder="Cati dentisti lucreaza in cabinet?"
+            placeholder="How many dentists work at your clinic?"
             options={ORG_SIZES}
           />
 
@@ -414,14 +414,14 @@ export default function OnboardingFlow() {
                 fontFamily: "var(--font-body)",
               }}
             >
-              Inapoi
+              Back
             </button>
             <button
               disabled={!canNext1}
               onClick={() => setStep(2)}
               style={{ ...primaryBtnStyle, flex: 2, opacity: canNext1 ? 1 : 0.5, cursor: canNext1 ? "pointer" : "not-allowed" }}
             >
-              Continua
+              Continue
             </button>
           </div>
         </div>
@@ -442,7 +442,7 @@ export default function OnboardingFlow() {
           color: "var(--color-ink)",
           marginBottom: 8,
         }}>
-          Bun venit!
+          Welcome!
         </h2>
         <p style={{
           fontSize: 14,
@@ -450,14 +450,14 @@ export default function OnboardingFlow() {
           marginBottom: 24,
           lineHeight: 1.6,
         }}>
-          Ai 7 zile de acces gratuit, din partea noastra!
+          You have 7 days of free access on us.
         </p>
         <button
           onClick={handleFinish}
           disabled={saving}
           style={{ ...primaryBtnStyle, opacity: saving ? 0.7 : 1 }}
         >
-          {saving ? "Se salveaza..." : "Incepe"}
+          {saving ? "Saving..." : "Get Started"}
         </button>
       </div>
     </div>

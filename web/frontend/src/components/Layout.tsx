@@ -118,7 +118,7 @@ export default function Layout({ children, onSelectPatient }: Props) {
               <path d="M12 2L2 7l10 5 10-5-10-5z" /><path d="M2 17l10 5 10-5" /><path d="M2 12l10 5 10-5" />
             </svg>
           </div>
-          DentalAI
+          Quinn
         </div>
 
         {/* New session — dark green rectangle, off-white text */}
@@ -134,7 +134,7 @@ export default function Layout({ children, onSelectPatient }: Props) {
           onMouseLeave={(e) => e.currentTarget.style.background = "var(--color-leaf)"}
         >
           <Plus size={16} />
-          Sesiune noua
+          New scan
         </NavLink>
 
         {/* Nav */}
@@ -150,7 +150,7 @@ export default function Layout({ children, onSelectPatient }: Props) {
             onClick={togglePanel}
           >
             <Users size={16} />
-            <span style={{ flex: 1 }}>Pacienti</span>
+            <span style={{ flex: 1 }}>Patients</span>
             {panelOpen
               ? <ChevronLeft size={14} style={{ color: "var(--color-ink-tertiary)" }} />
               : <ChevronRight size={14} style={{ color: "var(--color-ink-tertiary)" }} />
@@ -168,7 +168,7 @@ export default function Layout({ children, onSelectPatient }: Props) {
             onMouseLeave={(e) => { if (!isHome) e.currentTarget.style.background = "transparent"; }}
           >
             <BarChart3 size={16} />
-            Analitici
+            Analytics
           </NavLink>
         </nav>
 
@@ -265,7 +265,7 @@ export default function Layout({ children, onSelectPatient }: Props) {
                     onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
                   >
                     <LogOut size={14} />
-                    Deconectare
+                    Sign out
                   </button>
                 </div>
               </>
@@ -303,12 +303,12 @@ export default function Layout({ children, onSelectPatient }: Props) {
               borderBottom: "1px solid var(--border-color)",
               marginBottom: 12,
             }}>
-              Pacienti
+              Patients
             </div>
             {patients.length === 0 ? (
               <div style={{ textAlign: "center", padding: "32px 20px", color: "var(--color-ink-tertiary)" }}>
-                <div style={{ fontSize: 13 }}>Niciun pacient inca.</div>
-                <div style={{ fontSize: 12, marginTop: 4 }}>Scanarile cu nume vor aparea aici.</div>
+                <div style={{ fontSize: 13 }}>No patients yet.</div>
+                <div style={{ fontSize: 12, marginTop: 4 }}>Scans with names will appear here.</div>
               </div>
             ) : (
               patients.map((p) => (
@@ -349,7 +349,7 @@ export default function Layout({ children, onSelectPatient }: Props) {
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontWeight: 500, lineHeight: 1.3 }}>{p.name}</div>
                     <div style={{ fontSize: 12, color: "var(--color-ink-tertiary)" }}>
-                      {p.scan_count} {p.scan_count === 1 ? "scanare" : "scanari"}
+                      {p.scan_count} {p.scan_count === 1 ? "scan" : "scans"}
                     </div>
                   </div>
                   <div style={{
@@ -387,7 +387,7 @@ export default function Layout({ children, onSelectPatient }: Props) {
           color: "var(--color-ink-tertiary)",
           borderBottom: "1px solid var(--border-color)",
         }}>
-          Instrument de suport AI &mdash; nu inlocuieste diagnosticul clinic
+          AI decision support tool &mdash; does not replace clinical diagnosis
         </div>
         {children}
       </motion.div>

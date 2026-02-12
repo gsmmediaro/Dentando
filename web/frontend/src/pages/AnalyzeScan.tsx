@@ -25,7 +25,13 @@ export default function AnalyzeScan() {
   const [openPopover, setOpenPopover] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => { getModels().then(setModels); }, []);
+  useEffect(() => {
+    getModels()
+      .then(setModels)
+      .catch(() => {
+        setError("Could not load models. Check backend URL/CORS settings.");
+      });
+  }, []);
 
   useEffect(() => {
     if (!file) { setPreview(null); return; }
@@ -75,7 +81,7 @@ export default function AnalyzeScan() {
         }).catch(console.error);
       }
     } catch (e: any) {
-      setError(e.message || "Analiza a esuat");
+      setError(e.message || "Analysis failed");
     } finally {
       setLoading(false);
     }
@@ -156,7 +162,7 @@ export default function AnalyzeScan() {
           whiteSpace: "nowrap",
           margin: 0,
         }}>
-          Analiza radiografie
+          Analyze X-ray
         </h1>
         <input
           style={{
@@ -172,7 +178,7 @@ export default function AnalyzeScan() {
             transition: "border-color 0.15s",
           }}
           type="text"
-          placeholder="Numele pacientului (optional)"
+          placeholder="Patient name (optional)"
           value={patientName}
           onChange={(e) => setPatientName(e.target.value)}
           onFocus={(e) => e.currentTarget.style.borderColor = "var(--color-leaf)"}
@@ -205,7 +211,7 @@ export default function AnalyzeScan() {
           >
             <Upload size={36} strokeWidth={1.5} style={{ color: "var(--color-ink-ghost)", marginBottom: 10 }} />
             <div style={{ fontSize: 15, color: "var(--color-ink-secondary)" }}>
-              Trage o radiografie aici, sau apasa pentru a selecta
+              Drag an X-ray here, or click to select
             </div>
             <div style={{ fontSize: 12, color: "var(--color-ink-tertiary)", marginTop: 4 }}>
               JPG, PNG, BMP, TIFF
@@ -216,7 +222,7 @@ export default function AnalyzeScan() {
             <div style={{ width: "100%", background: "#1a1a1a", borderRadius: 14, overflow: "hidden" }}>
               <img
                 src={result ? result.annotated_image_url : preview!}
-                alt="Radiografie"
+                alt="X-ray"
                 style={{ width: "100%", display: "block" }}
               />
             </div>
@@ -254,7 +260,7 @@ export default function AnalyzeScan() {
                     color: loading ? "rgba(255,255,255,0.6)" : "white", flexShrink: 0,
                   }}
                 >
-                  {loading ? (<><Loader2 size={14} className="animate-spin" /> Analizeaza...</>) : "Analizeaza"}
+                  {loading ? (<><Loader2 size={14} className="animate-spin" /> Analyzing...</>) : "Analyze"}
                 </button>
               </div>
             )}
@@ -342,7 +348,7 @@ export default function AnalyzeScan() {
                 width: 220,
               }}>
                 <div style={{ fontSize: 11, fontWeight: 500, color: "var(--color-ink-tertiary)", textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 10 }}>
-                  Prag incredere
+                  Confidence threshold
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                   <SliderPrimitive.Root
@@ -411,10 +417,10 @@ export default function AnalyzeScan() {
         <button
           onClick={() => setToothAssign(!toothAssign)}
           style={toolbarBtnStyle(toothAssign)}
-          title="Atribuire dinte"
+          title="Tooth assignment"
         >
           <Waypoints size={13} />
-          Dinte
+          Tooth
         </button>
       </div>
 
@@ -430,7 +436,7 @@ export default function AnalyzeScan() {
         <div style={{ width: "100%" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
             <span style={{ fontSize: 13, color: "var(--color-ink-tertiary)" }}>
-              {result.model_name} &middot; {result.modality} &middot; {result.num_detections} {result.num_detections === 1 ? "detectie" : "detectii"} &middot; {result.turnaround_s}s
+               {result.model_name} &middot; {result.modality} &middot; {result.num_detections} {result.num_detections === 1 ? "detection" : "detections"} &middot; {result.turnaround_s}s
             </span>
           </div>
           <FindingsTable detections={result.detections} />

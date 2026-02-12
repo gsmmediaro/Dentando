@@ -60,7 +60,7 @@ export default function History() {
         marginBottom: 32,
         textAlign: "center",
       }}>
-        Istoric scanari
+        Scan history
       </h1>
 
       <div style={{
@@ -73,7 +73,7 @@ export default function History() {
         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
           <thead>
             <tr>
-              {["Data", "Pacient", "Fisier", "Suspiciune", "Incredere", "Detectii", "Modalitate", "Viteza"].map(h => (
+              {["Date", "Patient", "File", "Suspicion", "Confidence", "Detections", "Modality", "Speed"].map(h => (
                 <th key={h} style={thStyle}>{h}</th>
               ))}
             </tr>
@@ -82,7 +82,7 @@ export default function History() {
             {records.length === 0 ? (
               <tr>
                 <td colSpan={8} style={{ textAlign: "center", color: "var(--color-ink-tertiary)", padding: 48 }}>
-                  Nicio scanare.
+                  No scans.
                 </td>
               </tr>
             ) : (
@@ -105,8 +105,8 @@ export default function History() {
 
       <div style={{ display: "flex", gap: 8, justifyContent: "center", marginTop: 24 }}>
         {[
-          { label: "Inapoi", disabled: page === 0, onClick: () => setPage(Math.max(0, page - 1)) },
-          { label: "Inainte", disabled: !hasMore, onClick: () => setPage(page + 1) },
+          { label: "Back", disabled: page === 0, onClick: () => setPage(Math.max(0, page - 1)) },
+          { label: "Next", disabled: !hasMore, onClick: () => setPage(page + 1) },
         ].map(btn => (
           <button
             key={btn.label}

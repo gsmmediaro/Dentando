@@ -38,10 +38,12 @@ origins = os.getenv(
     "CORS_ORIGINS",
     "http://localhost:5173,http://127.0.0.1:5173",
 ).split(",")
+origin_regex = os.getenv("CORS_ORIGIN_REGEX", r"^https://.*\.vercel\.app$")
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[o.strip() for o in origins if o.strip()],
+    allow_origin_regex=origin_regex if origin_regex else None,
     allow_methods=["*"],
     allow_headers=["*"],
 )

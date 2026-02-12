@@ -14,42 +14,42 @@ export default function Privacy() {
         fontWeight: 400,
         marginBottom: 32,
       }}>
-        Politica de confidentialitate
+        Privacy Policy
       </h1>
 
-      <h2 style={{ fontSize: 16, fontWeight: 600, marginTop: 24, marginBottom: 8 }}>1. Datele colectate</h2>
+      <h2 style={{ fontSize: 16, fontWeight: 600, marginTop: 24, marginBottom: 8 }}>1. Data collected</h2>
       <p style={{ fontSize: 14, color: "var(--color-ink-secondary)", marginBottom: 16 }}>
-        Colectam urmatoarele date: nume, adresa de email, informatii despre organizatie, si datele radiografiilor incarcate pentru analiza. Aceste date sunt necesare pentru furnizarea serviciului.
+        We collect the following data: name, email address, organization information, and uploaded radiograph data for analysis. This data is required to provide the service.
       </p>
 
-      <h2 style={{ fontSize: 16, fontWeight: 600, marginTop: 24, marginBottom: 8 }}>2. Utilizarea datelor</h2>
+      <h2 style={{ fontSize: 16, fontWeight: 600, marginTop: 24, marginBottom: 8 }}>2. Data use</h2>
       <p style={{ fontSize: 14, color: "var(--color-ink-secondary)", marginBottom: 16 }}>
-        Datele dumneavoastra sunt utilizate exclusiv pentru furnizarea si imbunatatirea serviciului DentalAI. Nu vindem si nu partajam datele personale cu terti fara consimtamantul dumneavoastra explicit.
+        Your data is used exclusively to provide and improve Quinn services. We do not sell or share personal data with third parties without your explicit consent.
       </p>
 
-      <h2 style={{ fontSize: 16, fontWeight: 600, marginTop: 24, marginBottom: 8 }}>3. Stocarea datelor</h2>
+      <h2 style={{ fontSize: 16, fontWeight: 600, marginTop: 24, marginBottom: 8 }}>3. Data storage</h2>
       <p style={{ fontSize: 14, color: "var(--color-ink-secondary)", marginBottom: 16 }}>
-        Datele sunt stocate securizat pe servere Firebase (Google Cloud). Fiecare utilizator are acces doar la propriile date. Implementam masuri de securitate adecvate pentru protejarea informatiilor.
+        Data is securely stored on Firebase (Google Cloud) servers. Each user can access only their own data. We implement appropriate security measures to protect information.
       </p>
 
-      <h2 style={{ fontSize: 16, fontWeight: 600, marginTop: 24, marginBottom: 8 }}>4. Datele pacientilor</h2>
+      <h2 style={{ fontSize: 16, fontWeight: 600, marginTop: 24, marginBottom: 8 }}>4. Patient data</h2>
       <p style={{ fontSize: 14, color: "var(--color-ink-secondary)", marginBottom: 16 }}>
-        Radiografiile si datele pacientilor sunt stocate criptat si sunt accesibile doar utilizatorului care le-a incarcat. Nu utilizam datele pacientilor pentru antrenarea modelelor AI fara consimtamant explicit.
+        Radiographs and patient data are stored securely and are accessible only to the uploading user. We do not use patient data to train AI models without explicit consent.
       </p>
 
-      <h2 style={{ fontSize: 16, fontWeight: 600, marginTop: 24, marginBottom: 8 }}>5. Drepturile utilizatorului</h2>
+      <h2 style={{ fontSize: 16, fontWeight: 600, marginTop: 24, marginBottom: 8 }}>5. User rights</h2>
       <p style={{ fontSize: 14, color: "var(--color-ink-secondary)", marginBottom: 16 }}>
-        Aveti dreptul sa accesati, sa modificati sau sa stergeti datele dumneavoastra personale in orice moment. Pentru solicitari legate de datele personale, contactati-ne la adresa de email de suport.
+        You have the right to access, modify, or delete your personal data at any time. For personal data requests, contact us at our support email address.
       </p>
 
-      <h2 style={{ fontSize: 16, fontWeight: 600, marginTop: 24, marginBottom: 8 }}>6. Cookie-uri</h2>
+      <h2 style={{ fontSize: 16, fontWeight: 600, marginTop: 24, marginBottom: 8 }}>6. Cookies</h2>
       <p style={{ fontSize: 14, color: "var(--color-ink-secondary)", marginBottom: 16 }}>
-        Platforma utilizeaza cookie-uri esentiale pentru autentificare si functionarea corecta a serviciului. Nu utilizam cookie-uri de urmarire sau publicitate.
+        The platform uses essential cookies for authentication and proper functionality. We do not use tracking or advertising cookies.
       </p>
 
-      <h2 style={{ fontSize: 16, fontWeight: 600, marginTop: 24, marginBottom: 8 }}>7. Contactul</h2>
+      <h2 style={{ fontSize: 16, fontWeight: 600, marginTop: 24, marginBottom: 8 }}>7. Contact</h2>
       <p style={{ fontSize: 14, color: "var(--color-ink-secondary)", marginBottom: 16 }}>
-        Pentru orice intrebari legate de aceasta politica de confidentialitate sau de datele dumneavoastra, nu ezitati sa ne contactati.
+        For any questions regarding this privacy policy or your data, feel free to contact us.
       </p>
     </div>
   );

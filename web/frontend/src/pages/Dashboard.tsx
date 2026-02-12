@@ -38,7 +38,7 @@ export default function Dashboard() {
         marginBottom: 32,
         textAlign: "center",
       }}>
-        Bine ai venit
+        Welcome
       </h1>
 
       <div style={{
@@ -49,10 +49,10 @@ export default function Dashboard() {
         borderBottom: "1px solid var(--border-color)",
         width: "100%",
       }}>
-        <StatCard label="Scanari azi" value={stats.total} />
-        <StatCard label="Suspiciune mare" value={stats.high} color="var(--color-high)" />
-        <StatCard label="De revizuit" value={stats.review} color="var(--color-review)" />
-        <StatCard label="Timp mediu" value={`${stats.avg_turnaround}s`} />
+        <StatCard label="Scans today" value={stats.total} />
+        <StatCard label="High suspicion" value={stats.high} color="var(--color-high)" />
+        <StatCard label="Needs review" value={stats.review} color="var(--color-review)" />
+        <StatCard label="Avg turnaround" value={`${stats.avg_turnaround}s`} />
       </div>
 
       <div style={{
@@ -62,7 +62,7 @@ export default function Dashboard() {
         width: "100%",
         marginBottom: 16,
       }}>
-        <span style={{ fontWeight: 500 }}>Scanari recente</span>
+        <span style={{ fontWeight: 500 }}>Recent scans</span>
         <Link
           to="/analyze"
           style={{
@@ -79,7 +79,7 @@ export default function Dashboard() {
             transition: "background 0.15s",
           }}
         >
-          + Sesiune noua
+          + New scan
         </Link>
       </div>
 
@@ -93,7 +93,7 @@ export default function Dashboard() {
         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
           <thead>
             <tr>
-              {["Ora", "Pacient", "Fisier", "Suspiciune", "Incredere", "Detectii"].map(h => (
+              {["Time", "Patient", "File", "Suspicion", "Confidence", "Detections"].map(h => (
                 <th key={h} style={{
                   textAlign: "left",
                   padding: "12px 16px",
@@ -113,7 +113,7 @@ export default function Dashboard() {
             {recent.length === 0 ? (
               <tr>
                 <td colSpan={6} style={{ textAlign: "center", color: "var(--color-ink-tertiary)", padding: 48 }}>
-                  Nicio scanare inca. Incepe prin a analiza o radiografie.
+                  No scans yet. Start by analyzing an X-ray.
                 </td>
               </tr>
             ) : (

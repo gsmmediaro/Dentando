@@ -14,42 +14,42 @@ export default function Terms() {
         fontWeight: 400,
         marginBottom: 32,
       }}>
-        Termeni si conditii
+        Terms and Conditions
       </h1>
 
-      <h2 style={{ fontSize: 16, fontWeight: 600, marginTop: 24, marginBottom: 8 }}>1. Acceptarea termenilor</h2>
+      <h2 style={{ fontSize: 16, fontWeight: 600, marginTop: 24, marginBottom: 8 }}>1. Acceptance of terms</h2>
       <p style={{ fontSize: 14, color: "var(--color-ink-secondary)", marginBottom: 16 }}>
-        Prin utilizarea platformei DentalAI, acceptati acesti termeni si conditii in totalitate. Daca nu sunteti de acord cu oricare dintre aceste prevederi, va rugam sa nu utilizati platforma.
+        By using the Quinn platform, you accept these terms and conditions in full. If you do not agree with any provision, please do not use the platform.
       </p>
 
-      <h2 style={{ fontSize: 16, fontWeight: 600, marginTop: 24, marginBottom: 8 }}>2. Descrierea serviciului</h2>
+      <h2 style={{ fontSize: 16, fontWeight: 600, marginTop: 24, marginBottom: 8 }}>2. Service description</h2>
       <p style={{ fontSize: 14, color: "var(--color-ink-secondary)", marginBottom: 16 }}>
-        DentalAI este un instrument de suport bazat pe inteligenta artificiala, conceput pentru a asista profesionistii din domeniul stomatologic in analiza radiografiilor dentare. Platforma nu inlocuieste diagnosticul clinic profesional.
+        Quinn is an AI-powered support tool designed to assist dental professionals in analyzing dental radiographs. The platform does not replace professional clinical diagnosis.
       </p>
 
-      <h2 style={{ fontSize: 16, fontWeight: 600, marginTop: 24, marginBottom: 8 }}>3. Utilizarea corecta</h2>
+      <h2 style={{ fontSize: 16, fontWeight: 600, marginTop: 24, marginBottom: 8 }}>3. Proper use</h2>
       <p style={{ fontSize: 14, color: "var(--color-ink-secondary)", marginBottom: 16 }}>
-        Rezultatele furnizate de platforma sunt orientative si trebuie validate de un profesionist calificat. Utilizatorul este responsabil pentru toate deciziile clinice luate pe baza informatiilor furnizate de platforma.
+        Results provided by the platform are indicative and must be validated by a qualified professional. The user is responsible for all clinical decisions based on the information provided.
       </p>
 
-      <h2 style={{ fontSize: 16, fontWeight: 600, marginTop: 24, marginBottom: 8 }}>4. Contul de utilizator</h2>
+      <h2 style={{ fontSize: 16, fontWeight: 600, marginTop: 24, marginBottom: 8 }}>4. User account</h2>
       <p style={{ fontSize: 14, color: "var(--color-ink-secondary)", marginBottom: 16 }}>
-        Sunteti responsabil pentru mentinerea confidentialitatii contului si parolei dumneavoastra. Orice activitate efectuata prin contul dumneavoastra este responsabilitatea dumneavoastra.
+        You are responsible for keeping your account and password confidential. Any activity performed through your account is your responsibility.
       </p>
 
-      <h2 style={{ fontSize: 16, fontWeight: 600, marginTop: 24, marginBottom: 8 }}>5. Perioada de proba</h2>
+      <h2 style={{ fontSize: 16, fontWeight: 600, marginTop: 24, marginBottom: 8 }}>5. Trial period</h2>
       <p style={{ fontSize: 14, color: "var(--color-ink-secondary)", marginBottom: 16 }}>
-        Noii utilizatori beneficiaza de o perioada de proba gratuita de 7 zile. Dupa expirarea perioadei de proba, accesul la functiile premium poate fi restrictionat.
+        New users receive a 7-day free trial. After the trial period, access to premium features may be restricted.
       </p>
 
-      <h2 style={{ fontSize: 16, fontWeight: 600, marginTop: 24, marginBottom: 8 }}>6. Limitarea responsabilitatii</h2>
+      <h2 style={{ fontSize: 16, fontWeight: 600, marginTop: 24, marginBottom: 8 }}>6. Limitation of liability</h2>
       <p style={{ fontSize: 14, color: "var(--color-ink-secondary)", marginBottom: 16 }}>
-        DentalAI nu isi asuma responsabilitatea pentru deciziile clinice luate pe baza rezultatelor platformei. Serviciul este furnizat "ca atare", fara garantii de niciun fel.
+        Quinn is not responsible for clinical decisions made based on platform results. The service is provided "as is," without warranties of any kind.
       </p>
 
-      <h2 style={{ fontSize: 16, fontWeight: 600, marginTop: 24, marginBottom: 8 }}>7. Modificari ale termenilor</h2>
+      <h2 style={{ fontSize: 16, fontWeight: 600, marginTop: 24, marginBottom: 8 }}>7. Changes to terms</h2>
       <p style={{ fontSize: 14, color: "var(--color-ink-secondary)", marginBottom: 16 }}>
-        Ne rezervam dreptul de a modifica acesti termeni in orice moment. Utilizatorii vor fi notificati prin intermediul platformei despre orice modificari semnificative.
+        We reserve the right to modify these terms at any time. Users will be notified through the platform about significant changes.
       </p>
     </div>
   );

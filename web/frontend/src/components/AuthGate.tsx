@@ -112,16 +112,16 @@ export default function AuthGate() {
       if (mode === "login") {
         await login(email, password);
       } else {
-        if (!firstName.trim()) { setError("Introdu prenumele"); setSubmitting(false); return; }
+        if (!firstName.trim()) { setError("Enter your first name"); setSubmitting(false); return; }
         await register(email, password, firstName.trim(), lastName.trim());
       }
     } catch (err: any) {
       const code = err?.code || "";
-      if (code === "auth/email-already-in-use") setError("Acest email este deja folosit");
-      else if (code === "auth/invalid-email") setError("Email invalid");
-      else if (code === "auth/weak-password") setError("Parola trebuie sa aiba minim 6 caractere");
-      else if (code === "auth/invalid-credential") setError("Email sau parola gresita");
-      else setError(err?.message || "Eroare necunoscuta");
+      if (code === "auth/email-already-in-use") setError("This email is already in use");
+      else if (code === "auth/invalid-email") setError("Invalid email");
+      else if (code === "auth/weak-password") setError("Password must be at least 6 characters");
+      else if (code === "auth/invalid-credential") setError("Wrong email or password");
+      else setError(err?.message || "Unknown error");
     }
     setSubmitting(false);
   };
@@ -132,7 +132,7 @@ export default function AuthGate() {
       await loginWithGoogle();
     } catch (err: any) {
       if (err?.code !== "auth/popup-closed-by-user") {
-        setError(err?.message || "Eroare Google Sign-In");
+          setError(err?.message || "Google Sign-In error");
       }
     }
   };
@@ -148,7 +148,7 @@ export default function AuthGate() {
           textAlign: "center",
           marginBottom: 24,
         }}>
-          {mode === "login" ? "Bine ai revenit" : "Creeaza cont"}
+          {mode === "login" ? "Welcome back" : "Create account"}
         </h2>
 
         <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
@@ -156,7 +156,7 @@ export default function AuthGate() {
             <div style={{ display: "flex", gap: 12 }}>
               <input
                 style={inputStyle}
-                placeholder="Prenume"
+                placeholder="First name"
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
                 onFocus={(e) => e.currentTarget.style.borderColor = "var(--color-leaf)"}
@@ -164,7 +164,7 @@ export default function AuthGate() {
               />
               <input
                 style={inputStyle}
-                placeholder="Nume"
+                placeholder="Last name"
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
                 onFocus={(e) => e.currentTarget.style.borderColor = "var(--color-leaf)"}
@@ -185,7 +185,7 @@ export default function AuthGate() {
           <input
             style={inputStyle}
             type="password"
-            placeholder="Parola"
+            placeholder="Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             onFocus={(e) => e.currentTarget.style.borderColor = "var(--color-leaf)"}
@@ -205,7 +205,7 @@ export default function AuthGate() {
             disabled={submitting}
             style={{ ...primaryBtnStyle, opacity: submitting ? 0.7 : 1 }}
           >
-            {submitting ? "Se incarca..." : mode === "login" ? "Intra in cont" : "Creeaza cont"}
+            {submitting ? "Loading..." : mode === "login" ? "Sign in" : "Create account"}
           </button>
         </form>
 
@@ -216,7 +216,7 @@ export default function AuthGate() {
           margin: "16px 0",
         }}>
           <div style={{ flex: 1, height: 1, background: "var(--border-emphasis)" }} />
-          <span style={{ fontSize: 12, color: "var(--color-ink-tertiary)" }}>sau</span>
+          <span style={{ fontSize: 12, color: "var(--color-ink-tertiary)" }}>or</span>
           <div style={{ flex: 1, height: 1, background: "var(--border-emphasis)" }} />
         </div>
 
@@ -227,13 +227,13 @@ export default function AuthGate() {
           onMouseLeave={(e) => e.currentTarget.style.background = "white"}
         >
           {GOOGLE_G}
-          Continua cu Google
+          Continue with Google
         </button>
 
         <div style={{ textAlign: "center", marginTop: 20, fontSize: 13, color: "var(--color-ink-secondary)" }}>
           {mode === "login" ? (
             <>
-              Nu ai cont?{" "}
+              Don't have an account?{" "}
               <button
                 onClick={() => { setMode("register"); setError(""); }}
                 style={{
@@ -246,12 +246,12 @@ export default function AuthGate() {
                   fontSize: 13,
                 }}
               >
-                Inregistreaza-te
+                Sign up
               </button>
             </>
           ) : (
             <>
-              Ai deja cont?{" "}
+              Already have an account?{" "}
               <button
                 onClick={() => { setMode("login"); setError(""); }}
                 style={{
@@ -264,7 +264,7 @@ export default function AuthGate() {
                   fontSize: 13,
                 }}
               >
-                Intra in cont
+                Sign in
               </button>
             </>
           )}
