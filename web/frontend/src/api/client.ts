@@ -18,6 +18,12 @@ const BASE =
   import.meta.env.VITE_API_BASE_URL ||
   import.meta.env.VITE_API_URL ||
   "";
+const API_BASE = BASE.replace(/\/+$/, "");
+
+function build_api_url(path: string): string {
+  if (API_BASE) return `${API_BASE}${path}`;
+  return path;
+}
 
 export interface Detection {
   class_name: string;
@@ -85,13 +91,17 @@ export async function analyzeImage(
   form.append("modality", modality);
   form.append("use_tooth_assignment", String(useToothAssignment));
   form.append("patient_name", patientName);
-  const res = await fetch(`${BASE}/api/analyze`, { method: "POST", body: form });
+  const res = await fetch(build_api_url("/api/analyze"), {
+    method: "POST",
+    body: form,
+  });
   if (!res.ok) throw new Error(await res.text());
   return res.json();
 }
 
 export async function getModels(): Promise<ModelInfo[]> {
-  const res = await fetch(`${BASE}/api/models`);
+  const res = await fetch(build_api_url("/api/models"));
+  if (!res.ok) throw new Error(`Could not load models (${res.status})`);
   return res.json();
 }
 
