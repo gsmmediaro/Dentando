@@ -25,7 +25,7 @@ export default function Dashboard() {
       display: "flex",
       flexDirection: "column",
       alignItems: "center",
-      padding: "40px 32px",
+      padding: window.innerWidth <= 768 ? "24px 16px" : "40px 32px",
       maxWidth: 1000,
       width: "100%",
       margin: "0 auto",
@@ -42,8 +42,9 @@ export default function Dashboard() {
       </h1>
 
       <div style={{
-        display: "flex",
-        gap: 32,
+        display: "grid",
+        gridTemplateColumns: window.innerWidth <= 768 ? "1fr 1fr" : "repeat(4, 1fr)",
+        gap: window.innerWidth <= 768 ? 12 : 32,
         padding: "16px 0",
         marginBottom: 24,
         borderBottom: "1px solid var(--border-color)",
@@ -83,7 +84,7 @@ export default function Dashboard() {
         </Link>
       </div>
 
-      <div style={{
+      <div className="mobile-table-scroll" style={{
         width: "100%",
         background: "var(--color-surface)",
         border: "1px solid var(--border-color)",

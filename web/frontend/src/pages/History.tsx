@@ -47,7 +47,7 @@ export default function History() {
       display: "flex",
       flexDirection: "column",
       alignItems: "center",
-      padding: "40px 32px",
+      padding: window.innerWidth <= 768 ? "24px 16px" : "40px 32px",
       maxWidth: 1000,
       width: "100%",
       margin: "0 auto",
@@ -63,7 +63,7 @@ export default function History() {
         Scan history
       </h1>
 
-      <div style={{
+      <div className="mobile-table-scroll" style={{
         width: "100%",
         background: "var(--color-surface)",
         border: "1px solid var(--border-color)",

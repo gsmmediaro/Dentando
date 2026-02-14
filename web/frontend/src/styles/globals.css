@@ -104,3 +104,20 @@ select:focus-visible,
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border-emphasis); border-radius: 3px; }
+
+/* Mobile overrides */
+@media (max-width: 768px) {
+  :root {
+    --sidebar-w: 0px;
+    --panel-w: 0px;
+  }
+
+  .mobile-table-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .mobile-table-scroll table {
+    min-width: 600px;
+  }
+}

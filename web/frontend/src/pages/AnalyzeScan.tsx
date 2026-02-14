@@ -158,7 +158,7 @@ export default function AnalyzeScan() {
       flexDirection: "column",
       alignItems: "center",
       justifyContent: result ? "flex-start" : "center",
-      padding: "32px 32px 24px",
+      padding: window.innerWidth <= 768 ? "20px 16px 24px" : "32px 32px 24px",
       maxWidth: 900,
       width: "100%",
       margin: "0 auto",
@@ -167,14 +167,15 @@ export default function AnalyzeScan() {
       {/* Header row: title + patient name inline */}
       <div style={{
         display: "flex",
-        alignItems: "baseline",
-        gap: 24,
+        flexDirection: window.innerWidth <= 768 ? "column" : "row",
+        alignItems: window.innerWidth <= 768 ? "stretch" : "baseline",
+        gap: window.innerWidth <= 768 ? 12 : 24,
         width: "100%",
         marginBottom: 24,
       }}>
         <h1 style={{
           fontFamily: "var(--font-display)",
-          fontSize: 26,
+          fontSize: window.innerWidth <= 768 ? 22 : 26,
           fontWeight: 400,
           color: "var(--color-ink)",
           whiteSpace: "nowrap",
@@ -216,7 +217,7 @@ export default function AnalyzeScan() {
               width: "100%",
               border: `1.5px dashed ${dragOver ? "var(--color-leaf)" : "var(--border-emphasis)"}`,
               borderRadius: 14,
-              padding: "56px 32px",
+              padding: window.innerWidth <= 768 ? "40px 20px" : "56px 32px",
               textAlign: "center",
               cursor: "pointer",
               transition: "all 0.2s",
