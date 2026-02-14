@@ -66,6 +66,7 @@ export default function Layout({ children, onSelectPatient }: Props) {
   // Mobile drawer state
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [drawerView, setDrawerView] = useState<"menu" | "patients">("menu");
+  const [mobileProfileOpen, setMobileProfileOpen] = useState(false);
 
   const togglePanel = () => {
     if (isMobile) {
@@ -101,6 +102,12 @@ export default function Layout({ children, onSelectPatient }: Props) {
     }
   }, [location.pathname, isMobile]);
 
+  useEffect(() => {
+    if (!drawerOpen) {
+      setMobileProfileOpen(false);
+    }
+  }, [drawerOpen]);
+
   const isDashboard = location.pathname === "/dashboard";
 
   const displayName = userProfile
@@ -127,7 +134,22 @@ export default function Layout({ children, onSelectPatient }: Props) {
           zIndex: 10,
         }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <img src={quinnLogo} alt="Quinn" style={{ width: 24, height: 24 }} />
+            <button
+              onClick={() => { setDrawerView("menu"); setDrawerOpen(true); }}
+              aria-label="Open menu"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                padding: 2,
+                color: "var(--color-ink-secondary)",
+              }}
+            >
+              <Menu size={20} />
+            </button>
             <span style={{ fontFamily: "var(--font-display)", fontSize: 18, fontWeight: 500, color: "var(--color-ink)" }}>Quinn</span>
           </div>
           <div style={{ fontSize: 11, color: "var(--color-ink-tertiary)", textAlign: "center", flex: 1, padding: "0 8px" }}>
@@ -136,46 +158,8 @@ export default function Layout({ children, onSelectPatient }: Props) {
         </div>
 
         {/* Main content */}
-        <div style={{ flex: 1, paddingBottom: 72 }}>
+        <div style={{ flex: 1 }}>
           {children}
-        </div>
-
-        {/* Bottom nav bar */}
-        <div style={{
-          position: "fixed",
-          bottom: 0,
-          left: 0,
-          right: 0,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-around",
-          padding: "8px 0 calc(8px + env(safe-area-inset-bottom, 0px))",
-          background: "var(--color-surface)",
-          borderTop: "1px solid var(--border-color)",
-          zIndex: 25,
-        }}>
-          <NavLink to="/analyze" style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, textDecoration: "none", padding: "4px 12px" }}>
-            <Plus size={20} style={{ color: location.pathname === "/analyze" ? "var(--color-leaf)" : "var(--color-ink-tertiary)" }} />
-            <span style={{ fontSize: 10, fontWeight: 500, color: location.pathname === "/analyze" ? "var(--color-leaf)" : "var(--color-ink-tertiary)", fontFamily: "var(--font-body)" }}>Scan</span>
-          </NavLink>
-          <button
-            onClick={() => { setDrawerView("patients"); setDrawerOpen(true); }}
-            style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, background: "none", border: "none", cursor: "pointer", padding: "4px 12px" }}
-          >
-            <Users size={20} style={{ color: "var(--color-ink-tertiary)" }} />
-            <span style={{ fontSize: 10, fontWeight: 500, color: "var(--color-ink-tertiary)", fontFamily: "var(--font-body)" }}>Patients</span>
-          </button>
-          <NavLink to="/dashboard" style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, textDecoration: "none", padding: "4px 12px" }}>
-            <BarChart3 size={20} style={{ color: isDashboard ? "var(--color-leaf)" : "var(--color-ink-tertiary)" }} />
-            <span style={{ fontSize: 10, fontWeight: 500, color: isDashboard ? "var(--color-leaf)" : "var(--color-ink-tertiary)", fontFamily: "var(--font-body)" }}>Analytics</span>
-          </NavLink>
-          <button
-            onClick={() => { setDrawerView("menu"); setDrawerOpen(true); }}
-            style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, background: "none", border: "none", cursor: "pointer", padding: "4px 12px" }}
-          >
-            <Menu size={20} style={{ color: "var(--color-ink-tertiary)" }} />
-            <span style={{ fontSize: 10, fontWeight: 500, color: "var(--color-ink-tertiary)", fontFamily: "var(--font-body)" }}>More</span>
-          </button>
         </div>
 
         {/* Bottom drawer overlay + sheet */}
@@ -219,7 +203,10 @@ export default function Layout({ children, onSelectPatient }: Props) {
                   /* ── Menu view ── */
                   <div style={{ padding: "8px 16px 24px" }}>
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
-                      <span style={{ fontFamily: "var(--font-display)", fontSize: 18, fontWeight: 500 }}>Menu</span>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <img src={quinnLogo} alt="Quinn" style={{ width: 20, height: 20 }} />
+                        <span style={{ fontFamily: "var(--font-display)", fontSize: 18, fontWeight: 500 }}>Quinn</span>
+                      </div>
                       <button
                         onClick={() => { setDrawerOpen(false); setDrawerView("menu"); }}
                         style={{ background: "none", border: "none", cursor: "pointer", padding: 4, color: "var(--color-ink-tertiary)" }}
@@ -238,6 +225,8 @@ export default function Layout({ children, onSelectPatient }: Props) {
                           background: "var(--color-leaf)",
                           borderRadius: 8,
                           marginBottom: 8,
+                          justifyContent: "center",
+                          textAlign: "center",
                         }}
                       >
                         <Plus size={16} />
@@ -286,8 +275,60 @@ export default function Layout({ children, onSelectPatient }: Props) {
 
                     {/* Profile section */}
                     {user && (
-                      <div style={{ marginTop: 16, paddingTop: 16, borderTop: "1px solid var(--border-color)" }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12, padding: "0 12px" }}>
+                      <div style={{ marginTop: 16, paddingTop: 16, borderTop: "1px solid var(--border-color)", position: "relative" }}>
+                        {mobileProfileOpen && (
+                          <>
+                            <div
+                              style={{ position: "fixed", inset: 0, zIndex: 40 }}
+                              onClick={() => setMobileProfileOpen(false)}
+                            />
+                            <div
+                              style={{
+                                position: "absolute",
+                                left: 0,
+                                right: 0,
+                                bottom: "calc(100% + 6px)",
+                                background: "var(--color-surface)",
+                                border: "1px solid var(--border-emphasis)",
+                                borderRadius: 10,
+                                boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
+                                padding: 4,
+                                zIndex: 41,
+                              }}
+                            >
+                              <button
+                                onClick={() => { setDrawerOpen(false); setDrawerView("menu"); setMobileProfileOpen(false); logout(); }}
+                                style={{
+                                  ...linkBase,
+                                  color: "var(--color-ink-secondary)",
+                                  background: "transparent",
+                                  padding: "8px 12px",
+                                }}
+                              >
+                                <LogOut size={14} />
+                                Sign out
+                              </button>
+                            </div>
+                          </>
+                        )}
+                        <button
+                          onClick={() => setMobileProfileOpen((prev) => !prev)}
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 10,
+                            width: "100%",
+                            padding: "8px 12px",
+                            borderRadius: 8,
+                            border: "none",
+                            cursor: "pointer",
+                            background: mobileProfileOpen ? "var(--color-surface-hover)" : "transparent",
+                            textAlign: "left",
+                            fontFamily: "var(--font-body)",
+                            position: "relative",
+                            zIndex: 42,
+                          }}
+                        >
                           <div style={{
                             width: 30,
                             height: 30,
@@ -303,20 +344,9 @@ export default function Layout({ children, onSelectPatient }: Props) {
                           }}>
                             {userInitials}
                           </div>
-                          <span style={{ fontSize: 13, fontWeight: 500, color: "var(--color-ink)" }}>
+                          <span style={{ fontSize: 13, fontWeight: 500, color: "var(--color-ink)", minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                             {displayName || user.email}
                           </span>
-                        </div>
-                        <button
-                          onClick={() => { setDrawerOpen(false); logout(); }}
-                          style={{
-                            ...linkBase,
-                            color: "var(--color-ink-secondary)",
-                            background: "transparent",
-                          }}
-                        >
-                          <LogOut size={14} />
-                          Sign out
                         </button>
                       </div>
                     )}
@@ -464,6 +494,8 @@ export default function Layout({ children, onSelectPatient }: Props) {
             color: "#faf9f6",
             background: "var(--color-leaf)",
             borderRadius: 8,
+            justifyContent: "center",
+            textAlign: "center",
           }}
           onMouseEnter={(e) => e.currentTarget.style.background = "var(--color-leaf-hover)"}
           onMouseLeave={(e) => e.currentTarget.style.background = "var(--color-leaf)"}

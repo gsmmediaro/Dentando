@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { Upload, X, Loader2, Layers, Gauge, Waypoints } from "lucide-react";
 import * as SelectPrimitive from "@radix-ui/react-select";
 import * as SliderPrimitive from "@radix-ui/react-slider";
+import { AnimatePresence, motion } from "framer-motion";
 import { analyzeImage, getModels, saveScanToFirestore, type AnalysisResult, type ModelInfo } from "../api/client";
 import { useAuth } from "../contexts/AuthContext";
 import FindingsTable from "../components/FindingsTable";
@@ -22,6 +23,7 @@ export default function AnalyzeScan() {
   const [error, setError] = useState("");
   const [dragOver, setDragOver] = useState(false);
   const [openPopover, setOpenPopover] = useState<string | null>(null);
+  const [modelDrawerOpen, setModelDrawerOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -134,6 +136,7 @@ export default function AnalyzeScan() {
   ), [models]);
 
   const currentModelLabel = modelOptions.find((o) => o.value === selectedModel)?.label || "Panoramic";
+  const isMobile = window.innerWidth <= 768;
 
   const toolbarBtnStyle = (active: boolean = false): React.CSSProperties => ({
     display: "flex",
@@ -306,51 +309,64 @@ export default function AnalyzeScan() {
       {/* Settings toolbar */}
       <div style={{ display: "flex", alignItems: "center", gap: 6, width: "100%", marginBottom: 20, flexWrap: "wrap" }}>
 
-        {/* Model — direct Radix Select, no popover wrapper */}
-        <SelectPrimitive.Root value={selectedModel} onValueChange={setSelectedModel}>
-          <SelectPrimitive.Trigger style={toolbarBtnStyle()}>
+        {/* Model selector */}
+        {isMobile ? (
+          <button
+            style={toolbarBtnStyle(modelDrawerOpen)}
+            onClick={() => {
+              setOpenPopover(null);
+              setModelDrawerOpen(true);
+            }}
+          >
             <Layers size={13} />
-            <SelectPrimitive.Value>{currentModelLabel}</SelectPrimitive.Value>
-          </SelectPrimitive.Trigger>
-          <SelectPrimitive.Portal>
-            <SelectPrimitive.Content
-              style={{
-                background: "var(--color-surface)",
-                border: "1px solid var(--border-emphasis)",
-                borderRadius: 10,
-                boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
-                overflow: "hidden",
-                zIndex: 100,
-                minWidth: 180,
-              }}
-              position="popper"
-              sideOffset={6}
-              side="bottom"
-              align="start"
-            >
-              <SelectPrimitive.Viewport style={{ padding: 4 }}>
-                {modelOptions.map(opt => (
-                  <SelectPrimitive.Item
-                    key={opt.value}
-                    value={opt.value}
-                    style={{
-                      padding: "7px 12px",
-                      fontSize: 13,
-                      color: "var(--color-ink)",
-                      borderRadius: 6,
-                      cursor: "pointer",
-                      outline: "none",
-                      transition: "background 0.1s",
-                    }}
-                    className="data-[highlighted]:bg-leaf-subtle"
-                  >
-                    <SelectPrimitive.ItemText>{opt.label}</SelectPrimitive.ItemText>
-                  </SelectPrimitive.Item>
-                ))}
-              </SelectPrimitive.Viewport>
-            </SelectPrimitive.Content>
-          </SelectPrimitive.Portal>
-        </SelectPrimitive.Root>
+            {currentModelLabel}
+          </button>
+        ) : (
+          <SelectPrimitive.Root value={selectedModel} onValueChange={setSelectedModel}>
+            <SelectPrimitive.Trigger style={toolbarBtnStyle()}>
+              <Layers size={13} />
+              <SelectPrimitive.Value>{currentModelLabel}</SelectPrimitive.Value>
+            </SelectPrimitive.Trigger>
+            <SelectPrimitive.Portal>
+              <SelectPrimitive.Content
+                style={{
+                  background: "var(--color-surface)",
+                  border: "1px solid var(--border-emphasis)",
+                  borderRadius: 10,
+                  boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
+                  overflow: "hidden",
+                  zIndex: 100,
+                  minWidth: 180,
+                }}
+                position="popper"
+                sideOffset={6}
+                side="bottom"
+                align="start"
+              >
+                <SelectPrimitive.Viewport style={{ padding: 4 }}>
+                  {modelOptions.map(opt => (
+                    <SelectPrimitive.Item
+                      key={opt.value}
+                      value={opt.value}
+                      style={{
+                        padding: "7px 12px",
+                        fontSize: 13,
+                        color: "var(--color-ink)",
+                        borderRadius: 6,
+                        cursor: "pointer",
+                        outline: "none",
+                        transition: "background 0.1s",
+                      }}
+                      className="data-[highlighted]:bg-leaf-subtle"
+                    >
+                      <SelectPrimitive.ItemText>{opt.label}</SelectPrimitive.ItemText>
+                    </SelectPrimitive.Item>
+                  ))}
+                </SelectPrimitive.Viewport>
+              </SelectPrimitive.Content>
+            </SelectPrimitive.Portal>
+          </SelectPrimitive.Root>
+        )}
 
         {/* Confidence — popover below */}
         <div style={{ position: "relative" }}>
@@ -433,6 +449,77 @@ export default function AnalyzeScan() {
           </button>
         )}
       </div>
+
+      <AnimatePresence>
+        {isMobile && modelDrawerOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.3)", zIndex: 60 }}
+              onClick={() => setModelDrawerOpen(false)}
+            />
+            <motion.div
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "100%" }}
+              transition={{ type: "spring", stiffness: 280, damping: 32 }}
+              style={{
+                position: "fixed",
+                bottom: 0,
+                left: 0,
+                right: 0,
+                background: "var(--color-surface)",
+                borderRadius: "16px 16px 0 0",
+                maxHeight: "70vh",
+                overflowY: "auto",
+                zIndex: 61,
+                paddingBottom: "env(safe-area-inset-bottom, 0px)",
+              }}
+            >
+              <div style={{ display: "flex", justifyContent: "center", padding: "10px 0 4px" }}>
+                <div style={{ width: 36, height: 4, borderRadius: 2, background: "var(--color-ink-ghost)" }} />
+              </div>
+              <div style={{ padding: "8px 16px 16px" }}>
+                <div style={{ fontFamily: "var(--font-display)", fontSize: 18, fontWeight: 500, color: "var(--color-ink)", marginBottom: 10 }}>
+                  Models
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                  {modelOptions.map((opt) => {
+                    const active = opt.value === selectedModel;
+                    return (
+                      <button
+                        key={opt.value}
+                        onClick={() => {
+                          setSelectedModel(opt.value);
+                          setModelDrawerOpen(false);
+                        }}
+                        style={{
+                          width: "100%",
+                          textAlign: "left",
+                          border: "none",
+                          borderRadius: 8,
+                          padding: "10px 12px",
+                          cursor: "pointer",
+                          background: active ? "var(--color-leaf-subtle)" : "transparent",
+                          color: active ? "var(--color-leaf-text)" : "var(--color-ink)",
+                          fontSize: 14,
+                          fontWeight: active ? 600 : 500,
+                          fontFamily: "var(--font-body)",
+                        }}
+                      >
+                        {opt.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
       {/* Error */}
       {error && (
