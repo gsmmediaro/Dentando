@@ -92,15 +92,21 @@ export default function AnalyzeScan() {
       setResult(res);
       // Save to Firestore
       if (user) {
-        saveScanToFirestore(user.uid, {
-          filename: res.filename,
-          patientName,
-          suspicion: res.suspicion_level,
-          confidence: res.overall_confidence,
-          detectionsCount: res.num_detections,
-          modality: res.modality,
-          turnaroundS: res.turnaround_s,
-        }).catch(console.error);
+        try {
+          await saveScanToFirestore(user.uid, {
+            file,
+            filename: res.filename,
+            patientName,
+            suspicion: res.suspicion_level,
+            confidence: res.overall_confidence,
+            detectionsCount: res.num_detections,
+            modality: res.modality,
+            turnaroundS: res.turnaround_s,
+            annotatedImageUrl: res.annotated_image_url,
+          });
+        } catch (save_error: any) {
+          setError(save_error?.message || "Scan analyzed, but failed to save in Firestore.");
+        }
       }
     } catch (e: any) {
       setError(e.message || "Analysis failed");

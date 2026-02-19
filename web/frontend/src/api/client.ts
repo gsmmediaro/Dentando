@@ -12,7 +12,8 @@ import {
   serverTimestamp,
   Timestamp,
 } from "firebase/firestore";
-import { db } from "../firebase";
+import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
+import { db, storage } from "../firebase";
 
 const BASE =
   import.meta.env.VITE_API_BASE_URL ||
@@ -53,6 +54,8 @@ export interface ScanRecord {
   detections_count: number;
   modality: string;
   turnaround_s: number;
+  image_url?: string;
+  annotated_image_url?: string;
 }
 
 export interface PatientSummary {
@@ -113,9 +116,19 @@ export async function getModels(): Promise<ModelInfo[]> {
 
 const SUSPICION_ORDER: Record<string, number> = { LOW: 0, MODERATE: 1, HIGH: 2, REVIEW: 3 };
 
+function normalize_patient_name(name: string): string {
+  const trimmed = name.trim();
+  return trimmed || "Pacient anonim";
+}
+
+function patient_doc_id(name: string): string {
+  return name.replace(/\//g, "-");
+}
+
 export async function saveScanToFirestore(
   uid: string,
   scan: {
+    file: File;
     filename: string;
     patientName: string;
     suspicion: string;
@@ -123,40 +136,55 @@ export async function saveScanToFirestore(
     detectionsCount: number;
     modality: string;
     turnaroundS: number;
+    annotatedImageUrl?: string;
   },
 ) {
+  const clean_patient_name = normalize_patient_name(scan.patientName);
+  let image_url = "";
+
+  try {
+    const safe_name = scan.filename.replace(/[^a-zA-Z0-9._-]/g, "_");
+    const storage_path = `users/${uid}/scans/${Date.now()}_${safe_name}`;
+    const image_ref = ref(storage, storage_path);
+    await uploadBytes(image_ref, scan.file);
+    image_url = await getDownloadURL(image_ref);
+  } catch (error) {
+    console.error("Could not upload scan image to Firebase Storage", error);
+  }
+
   const scansRef = collection(db, "users", uid, "scans");
   await addDoc(scansRef, {
     timestamp: serverTimestamp(),
     filename: scan.filename,
-    patientName: scan.patientName,
+    patientName: clean_patient_name,
     suspicion: scan.suspicion,
     confidence: scan.confidence,
     detectionsCount: scan.detectionsCount,
     modality: scan.modality,
     turnaroundS: scan.turnaroundS,
+    imageUrl: image_url,
+    annotatedImageUrl: scan.annotatedImageUrl || "",
   });
 
-  // Update patient summary if patient name provided
-  if (scan.patientName.trim()) {
-    const patRef = doc(db, "users", uid, "patients", scan.patientName.trim());
-    const patSnap = await getDoc(patRef);
-    if (patSnap.exists()) {
-      const data = patSnap.data();
-      const oldWorst = SUSPICION_ORDER[data.worstSuspicion] ?? -1;
-      const newWorst = SUSPICION_ORDER[scan.suspicion] ?? -1;
-      await setDoc(patRef, {
-        scanCount: (data.scanCount || 0) + 1,
-        lastScan: new Date().toISOString(),
-        worstSuspicion: newWorst > oldWorst ? scan.suspicion : data.worstSuspicion,
-      });
-    } else {
-      await setDoc(patRef, {
-        scanCount: 1,
-        lastScan: new Date().toISOString(),
-        worstSuspicion: scan.suspicion,
-      });
-    }
+  const patRef = doc(db, "users", uid, "patients", patient_doc_id(clean_patient_name));
+  const patSnap = await getDoc(patRef);
+  if (patSnap.exists()) {
+    const data = patSnap.data();
+    const oldWorst = SUSPICION_ORDER[data.worstSuspicion] ?? -1;
+    const newWorst = SUSPICION_ORDER[scan.suspicion] ?? -1;
+    await setDoc(patRef, {
+      name: clean_patient_name,
+      scanCount: (data.scanCount || 0) + 1,
+      lastScan: new Date().toISOString(),
+      worstSuspicion: newWorst > oldWorst ? scan.suspicion : data.worstSuspicion,
+    });
+  } else {
+    await setDoc(patRef, {
+      name: clean_patient_name,
+      scanCount: 1,
+      lastScan: new Date().toISOString(),
+      worstSuspicion: scan.suspicion,
+    });
   }
 }
 
@@ -182,6 +210,8 @@ export async function getHistoryFromFirestore(uid: string, count = 50): Promise<
       detections_count: data.detectionsCount || 0,
       modality: data.modality || "",
       turnaround_s: data.turnaroundS || 0,
+      image_url: data.imageUrl || "",
+      annotated_image_url: data.annotatedImageUrl || "",
     };
   });
 }
@@ -222,7 +252,7 @@ export async function getPatientsFromFirestore(uid: string): Promise<PatientSumm
   return snap.docs.map((d) => {
     const data = d.data();
     return {
-      name: d.id,
+      name: data.name || d.id,
       scan_count: data.scanCount || 0,
       last_scan: data.lastScan || "",
       worst_suspicion: data.worstSuspicion || "LOW",
@@ -252,6 +282,8 @@ export async function getPatientScansFromFirestore(uid: string, name: string): P
       detections_count: data.detectionsCount || 0,
       modality: data.modality || "",
       turnaround_s: data.turnaroundS || 0,
+      image_url: data.imageUrl || "",
+      annotated_image_url: data.annotatedImageUrl || "",
     };
   });
 }
