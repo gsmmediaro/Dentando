@@ -32,6 +32,31 @@ function to_result_from_saved_scan(scan: ScanRecord): AnalysisResult {
   };
 }
 
+function check_image_url(url: string): Promise<boolean> {
+  return new Promise((resolve) => {
+    if (!url) {
+      resolve(false);
+      return;
+    }
+    const img = new Image();
+    img.onload = () => resolve(true);
+    img.onerror = () => resolve(false);
+    img.src = url;
+  });
+}
+
+async function pick_first_valid_saved_scan(
+  scans: ScanRecord[],
+): Promise<ScanRecord | null> {
+  for (const scan of scans) {
+    const candidate_url = scan.annotated_image_url || scan.image_url || "";
+    if (!candidate_url) continue;
+    const ok = await check_image_url(candidate_url);
+    if (ok) return scan;
+  }
+  return null;
+}
+
 export default function AnalyzeScan() {
   const location = useLocation();
   const { user } = useAuth();
@@ -44,6 +69,7 @@ export default function AnalyzeScan() {
   const [preview, setPreview] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<AnalysisResult | null>(null);
+  const [resultImageError, setResultImageError] = useState(false);
   const [error, setError] = useState("");
   const [dragOver, setDragOver] = useState(false);
   const [openPopover, setOpenPopover] = useState<string | null>(null);
@@ -95,16 +121,26 @@ export default function AnalyzeScan() {
     const patient = params.get("patient")?.trim();
     if (!user || !patient || params.has("new")) return;
 
+    let cancelled = false;
     setLoading(true);
     setError("");
+    setResultImageError(false);
     getPatientScansFromFirestore(user.uid, patient)
-      .then((scans) => {
+      .then(async (scans) => {
+        if (cancelled) return;
         if (!scans.length) {
           setError("No saved scans found for this patient.");
           return;
         }
 
-        const saved_result = to_result_from_saved_scan(scans[0]);
+        const valid_scan = await pick_first_valid_saved_scan(scans);
+        if (cancelled) return;
+        if (!valid_scan) {
+          setError("Saved scan image is no longer available (404). Please re-analyze the image.");
+          return;
+        }
+
+        const saved_result = to_result_from_saved_scan(valid_scan);
         if (!saved_result.annotated_image_url) {
           setError("Saved scan has no image URL.");
           return;
@@ -122,13 +158,19 @@ export default function AnalyzeScan() {
         setError(message);
       })
       .finally(() => {
+        if (cancelled) return;
         setLoading(false);
       });
+
+    return () => {
+      cancelled = true;
+    };
   }, [location.search, user]);
 
   const handleFile = useCallback((f: File) => {
     setFile(f);
     setResult(null);
+    setResultImageError(false);
     setError("");
   }, []);
 
@@ -143,6 +185,7 @@ export default function AnalyzeScan() {
     setFile(null);
     setPreview(null);
     setResult(null);
+    setResultImageError(false);
     setError("");
     if (inputRef.current) {
       inputRef.current.value = "";
@@ -154,6 +197,7 @@ export default function AnalyzeScan() {
     setLoading(true);
     setError("");
     setResult(null);
+    setResultImageError(false);
     try {
       const res = await analyzeImage(
         file,
@@ -328,11 +372,33 @@ export default function AnalyzeScan() {
         ) : (
           <div style={{ position: "relative" }} className="group">
             <div style={{ width: "100%", background: "#1a1a1a", borderRadius: 14, overflow: "hidden" }}>
-              <img
-                src={result ? result.annotated_image_url : preview!}
-                alt="X-ray"
-                style={{ width: "100%", display: "block" }}
-              />
+              {result && resultImageError ? (
+                <div style={{
+                  width: "100%",
+                  minHeight: 260,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  color: "rgba(255,255,255,0.75)",
+                  fontSize: 14,
+                  padding: 24,
+                  textAlign: "center",
+                }}>
+                  Saved image is unavailable (404). Please re-analyze this patient.
+                </div>
+              ) : (
+                <img
+                  src={result ? result.annotated_image_url : preview!}
+                  alt="X-ray"
+                  style={{ width: "100%", display: "block" }}
+                  onLoad={() => setResultImageError(false)}
+                  onError={() => {
+                    if (result) {
+                      setResultImageError(true);
+                    }
+                  }}
+                />
+              )}
             </div>
             {!loading && (
               <button
