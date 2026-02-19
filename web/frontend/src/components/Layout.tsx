@@ -89,8 +89,13 @@ export default function Layout({ children, onSelectPatient }: Props) {
   const handlePatientClick = async (name: string) => {
     if (!user) return;
     setSelectedPatient(name);
-    const scans = await getPatientScansFromFirestore(user.uid, name);
-    onSelectPatient?.(scans, name);
+    try {
+      const scans = await getPatientScansFromFirestore(user.uid, name);
+      onSelectPatient?.(scans, name);
+    } catch (error) {
+      console.error("Could not load patient scans", error);
+      onSelectPatient?.([], name);
+    }
     if (isMobile) setDrawerOpen(false);
   };
 

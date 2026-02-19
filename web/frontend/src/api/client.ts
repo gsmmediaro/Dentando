@@ -26,6 +26,25 @@ function build_api_url(path: string): string {
   return path;
 }
 
+function ensure_https_url(url: string): string {
+  if (!url) return "";
+  if (url.startsWith("http://")) {
+    return `https://${url.slice("http://".length)}`;
+  }
+  return url;
+}
+
+function timestamp_to_millis(value: unknown): number {
+  if (value instanceof Timestamp) {
+    return value.toMillis();
+  }
+  if (typeof value === "string") {
+    const parsed = Date.parse(value);
+    return Number.isNaN(parsed) ? 0 : parsed;
+  }
+  return 0;
+}
+
 export interface Detection {
   class_name: string;
   confidence: number;
@@ -103,6 +122,7 @@ export async function analyzeImage(
   if (data.annotated_image_url?.startsWith("/")) {
     data.annotated_image_url = build_api_url(data.annotated_image_url);
   }
+  data.annotated_image_url = ensure_https_url(data.annotated_image_url);
   return data;
 }
 
@@ -162,8 +182,8 @@ export async function saveScanToFirestore(
     detectionsCount: scan.detectionsCount,
     modality: scan.modality,
     turnaroundS: scan.turnaroundS,
-    imageUrl: image_url,
-    annotatedImageUrl: scan.annotatedImageUrl || "",
+    imageUrl: ensure_https_url(image_url),
+    annotatedImageUrl: ensure_https_url(scan.annotatedImageUrl || ""),
   });
 
   const patRef = doc(db, "users", uid, "patients", patient_doc_id(clean_patient_name));
@@ -210,8 +230,8 @@ export async function getHistoryFromFirestore(uid: string, count = 50): Promise<
       detections_count: data.detectionsCount || 0,
       modality: data.modality || "",
       turnaround_s: data.turnaroundS || 0,
-      image_url: data.imageUrl || "",
-      annotated_image_url: data.annotatedImageUrl || "",
+      image_url: ensure_https_url(data.imageUrl || ""),
+      annotated_image_url: ensure_https_url(data.annotatedImageUrl || ""),
     };
   });
 }
@@ -264,26 +284,27 @@ export async function getPatientScansFromFirestore(uid: string, name: string): P
   const q = query(
     collection(db, "users", uid, "scans"),
     where("patientName", "==", name),
-    orderBy("timestamp", "desc"),
   );
   const snap = await getDocs(q);
-  return snap.docs.map((d) => {
-    const data = d.data();
-    const ts = data.timestamp instanceof Timestamp
-      ? data.timestamp.toDate().toISOString()
-      : new Date().toISOString();
-    return {
-      id: d.id,
-      timestamp: ts,
-      filename: data.filename || "",
-      patient_name: data.patientName || "",
-      suspicion: data.suspicion || "LOW",
-      confidence: data.confidence || 0,
-      detections_count: data.detectionsCount || 0,
-      modality: data.modality || "",
-      turnaround_s: data.turnaroundS || 0,
-      image_url: data.imageUrl || "",
-      annotated_image_url: data.annotatedImageUrl || "",
-    };
-  });
+  return snap.docs
+    .map((d) => {
+      const data = d.data();
+      const ts = data.timestamp instanceof Timestamp
+        ? data.timestamp.toDate().toISOString()
+        : new Date().toISOString();
+      return {
+        id: d.id,
+        timestamp: ts,
+        filename: data.filename || "",
+        patient_name: data.patientName || "",
+        suspicion: data.suspicion || "LOW",
+        confidence: data.confidence || 0,
+        detections_count: data.detectionsCount || 0,
+        modality: data.modality || "",
+        turnaround_s: data.turnaroundS || 0,
+        image_url: ensure_https_url(data.imageUrl || ""),
+        annotated_image_url: ensure_https_url(data.annotatedImageUrl || ""),
+      };
+    })
+    .sort((a, b) => timestamp_to_millis(b.timestamp) - timestamp_to_millis(a.timestamp));
 }
