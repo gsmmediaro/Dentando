@@ -1,6 +1,6 @@
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { Plus, BarChart3, Users, LogOut, ChevronRight, ChevronLeft, Menu, X, ArrowLeft } from "lucide-react";
 import { getPatientsFromFirestore, type PatientSummary } from "../api/client";
 import { useAuth } from "../contexts/AuthContext";
@@ -68,6 +68,11 @@ export default function Layout({ children }: Props) {
   const [drawerView, setDrawerView] = useState<"menu" | "patients">("menu");
   const [mobileProfileOpen, setMobileProfileOpen] = useState(false);
 
+  const refreshPatients = useCallback(() => {
+    if (!user) return;
+    getPatientsFromFirestore(user.uid).then(setPatients);
+  }, [user]);
+
   const togglePanel = () => {
     if (isMobile) {
       setDrawerView("patients");
@@ -80,11 +85,17 @@ export default function Layout({ children }: Props) {
 
   useEffect(() => {
     if (isMobile && drawerView === "patients" && drawerOpen && user) {
-      getPatientsFromFirestore(user.uid).then(setPatients);
+      refreshPatients();
     } else if (!isMobile && panelOpen && user) {
-      getPatientsFromFirestore(user.uid).then(setPatients);
+      refreshPatients();
     }
-  }, [panelOpen, user, isMobile, drawerOpen, drawerView]);
+  }, [panelOpen, user, isMobile, drawerOpen, drawerView, refreshPatients]);
+
+  useEffect(() => {
+    const handler = () => refreshPatients();
+    window.addEventListener("quinn:patients-updated", handler);
+    return () => window.removeEventListener("quinn:patients-updated", handler);
+  }, [refreshPatients]);
 
   const handleNewScanClick = (event?: React.MouseEvent) => {
     event?.preventDefault();

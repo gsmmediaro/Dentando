@@ -176,13 +176,17 @@ export default function AnalyzeScan() {
           modality: res.modality,
           turnaroundS: res.turnaround_s,
           annotatedImageUrl: res.annotated_image_url,
-        }).catch((save_error: unknown) => {
-          const message =
-            save_error instanceof Error
-              ? save_error.message
-              : "Scan analyzed, but failed to save in Firestore.";
-          setError(message);
-        });
+        })
+          .then(() => {
+            window.dispatchEvent(new Event("quinn:patients-updated"));
+          })
+          .catch((save_error: unknown) => {
+            const message =
+              save_error instanceof Error
+                ? save_error.message
+                : "Scan analyzed, but failed to save in Firestore.";
+            setError(message);
+          });
       }
     } catch (e: any) {
       setError(e.message || "Analysis failed");
