@@ -4,11 +4,33 @@ import * as SelectPrimitive from "@radix-ui/react-select";
 import * as SliderPrimitive from "@radix-ui/react-slider";
 import { AnimatePresence, motion } from "framer-motion";
 import { useLocation } from "react-router-dom";
-import { analyzeImage, getModels, saveScanToFirestore, type AnalysisResult, type ModelInfo } from "../api/client";
+import {
+  analyzeImage,
+  getModels,
+  getPatientScansFromFirestore,
+  saveScanToFirestore,
+  type AnalysisResult,
+  type ModelInfo,
+  type ScanRecord,
+} from "../api/client";
 import { useAuth } from "../contexts/AuthContext";
 import FindingsTable from "../components/FindingsTable";
 
 const ACCEPT = ".jpg,.jpeg,.png,.bmp,.tiff,.tif";
+
+function to_result_from_saved_scan(scan: ScanRecord): AnalysisResult {
+  return {
+    filename: scan.filename,
+    suspicion_level: scan.suspicion,
+    overall_confidence: scan.confidence,
+    detections: [],
+    annotated_image_url: scan.annotated_image_url || scan.image_url || "",
+    modality: scan.modality || "Panoramic",
+    model_name: "Saved scan",
+    num_detections: scan.detections_count,
+    turnaround_s: scan.turnaround_s,
+  };
+}
 
 export default function AnalyzeScan() {
   const location = useLocation();
@@ -67,6 +89,42 @@ export default function AnalyzeScan() {
       inputRef.current.value = "";
     }
   }, [location.search]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const patient = params.get("patient")?.trim();
+    if (!user || !patient || params.has("new")) return;
+
+    setLoading(true);
+    setError("");
+    getPatientScansFromFirestore(user.uid, patient)
+      .then((scans) => {
+        if (!scans.length) {
+          setError("No saved scans found for this patient.");
+          return;
+        }
+
+        const saved_result = to_result_from_saved_scan(scans[0]);
+        if (!saved_result.annotated_image_url) {
+          setError("Saved scan has no image URL.");
+          return;
+        }
+
+        setPatientName(patient);
+        setFile(null);
+        setPreview(null);
+        setResult(saved_result);
+      })
+      .catch((err: unknown) => {
+        const message = err instanceof Error
+          ? err.message
+          : "Could not load patient scan.";
+        setError(message);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, [location.search, user]);
 
   const handleFile = useCallback((f: File) => {
     setFile(f);
@@ -234,7 +292,7 @@ export default function AnalyzeScan() {
 
       {/* Upload / Image area */}
       <div style={{ width: "100%", marginBottom: 16 }}>
-        {!file ? (
+        {!file && !result ? (
           <div
             onClick={() => inputRef.current?.click()}
             onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
@@ -293,7 +351,7 @@ export default function AnalyzeScan() {
                 borderRadius: "0 0 14px 14px", display: "flex", alignItems: "center", justifyContent: "space-between",
               }}>
                 <span style={{ color: "rgba(255,255,255,0.7)", fontSize: 13, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginRight: 12 }}>
-                  {file.name}
+                  {file?.name || "Scan"}
                 </span>
                 <button
                   onClick={handleAnalyze}

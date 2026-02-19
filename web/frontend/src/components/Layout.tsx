@@ -96,9 +96,9 @@ export default function Layout({ children }: Props) {
     }
   };
 
-  const handlePatientClick = async (name: string) => {
+  const handlePatientClick = (name: string) => {
     setSelectedPatient(name);
-    navigate(`/history?patient=${encodeURIComponent(name)}`);
+    navigate(`/analyze?patient=${encodeURIComponent(name)}`);
     if (isMobile) {
       setDrawerOpen(false);
       setDrawerView("menu");
