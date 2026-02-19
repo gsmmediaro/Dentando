@@ -92,14 +92,25 @@ page = st.sidebar.radio(
 if page == "Caries Screening":
     from dentist_ui.styles import inject_css
     from dentist_ui.state import (
-        init_state, record_scan, get_daily_stats, get_scan_history,
-        get_settings, update_settings,
+        init_state,
+        record_scan,
+        get_daily_stats,
+        get_scan_history,
+        get_settings,
+        update_settings,
+        start_new_scan,
     )
     from dentist_ui.inference import run_analysis
     from dentist_ui.components import (
-        render_disclaimer, render_stat_cards, render_verdict_card,
-        render_model_selector, render_upload_area, render_examples_gallery,
-        render_scan_history, render_settings,
+        render_disclaimer,
+        render_stat_cards,
+        render_verdict_card,
+        render_model_selector,
+        render_upload_area,
+        render_examples_gallery,
+        render_scan_history,
+        render_settings,
+        render_patients_sidebar,
     )
 
     init_state()
@@ -107,6 +118,7 @@ if page == "Caries Screening":
 
     st.title("Caries Screening")
     render_disclaimer()
+    render_patients_sidebar(get_scan_history())
 
     sub_page = st.radio(
         "Section",
@@ -117,8 +129,9 @@ if page == "Caries Screening":
 
     if sub_page == "Dashboard":
         stats = get_daily_stats()
-        render_stat_cards(stats["total"], stats["high"], stats["review"],
-                          stats["avg_turnaround"])
+        render_stat_cards(
+            stats["total"], stats["high"], stats["review"], stats["avg_turnaround"]
+        )
         st.markdown("---")
         st.subheader("Recent Scans")
         history = get_scan_history()
@@ -126,53 +139,97 @@ if page == "Caries Screening":
 
     elif sub_page == "Analyze Scan":
         settings = get_settings()
-        model_path, _source = render_model_selector()
-        uploaded_images = render_upload_area()
+        patient_name = st.text_input(
+            "Patient name",
+            key="cs_active_patient",
+            placeholder="e.g. Andrei Popescu",
+        )
 
-        if st.button("Analyze X-ray", type="primary"):
-            if not uploaded_images:
-                st.error("Please upload at least one image.")
-                st.stop()
-            if not model_path:
-                st.error("Please select or upload a model first.")
-                st.stop()
+        if st.session_state.get("cs_scan_locked", False):
+            st.info("Current scan is finalized. Click **New Scan** to start another.")
+            last_result = st.session_state.get("cs_last_result")
+            if last_result:
+                render_verdict_card(
+                    last_result["filename"],
+                    last_result["suspicion_level"],
+                    last_result["overall_confidence"],
+                    last_result["annotated_image"],
+                    last_result["detections"],
+                    last_result["tooth_predictions"],
+                    last_result["modality"],
+                )
 
-            for img_file in uploaded_images:
-                try:
-                    import time as _time
-                    _t0 = _time.time()
-                    image = Image.open(img_file).convert("RGB")
-                    img_array = np.array(image)
+            if st.button("New Scan"):
+                start_new_scan()
+                st.rerun()
+        else:
+            model_path, _source = render_model_selector()
+            uploaded_images = render_upload_area()
 
-                    result = run_analysis(
-                        img_array,
-                        model_path,
-                        conf_threshold=settings["conf"],
-                        modality=settings["modality"],
-                        use_tooth_assignment=settings["tooth_assign"],
-                    )
-                    elapsed = _time.time() - _t0
+            if st.button("Analyze X-ray", type="primary"):
+                if not uploaded_images:
+                    st.error("Please upload at least one image.")
+                    st.stop()
+                if not model_path:
+                    st.error("Please select or upload a model first.")
+                    st.stop()
 
-                    render_verdict_card(
-                        img_file.name,
-                        result["suspicion_level"],
-                        result["overall_confidence"],
-                        result["annotated_image"],
-                        result["detections"],
-                        result["tooth_predictions"],
-                        result["modality"],
-                    )
+                has_successful_scan = False
+                for img_file in uploaded_images:
+                    try:
+                        import time as _time
 
-                    record_scan(
-                        filename=img_file.name,
-                        suspicion_level=result["suspicion_level"],
-                        confidence=result["overall_confidence"],
-                        num_detections=result["num_detections"],
-                        modality=result["modality"],
-                        turnaround=elapsed,
-                    )
-                except Exception as e:
-                    st.error(f"Analysis failed for {img_file.name}: {e}")
+                        _t0 = _time.time()
+                        image_bytes = img_file.getvalue()
+                        image = Image.open(img_file).convert("RGB")
+                        img_array = np.array(image)
+
+                        result = run_analysis(
+                            img_array,
+                            model_path,
+                            conf_threshold=settings["conf"],
+                            modality=settings["modality"],
+                            use_tooth_assignment=settings["tooth_assign"],
+                        )
+                        elapsed = _time.time() - _t0
+
+                        render_verdict_card(
+                            img_file.name,
+                            result["suspicion_level"],
+                            result["overall_confidence"],
+                            result["annotated_image"],
+                            result["detections"],
+                            result["tooth_predictions"],
+                            result["modality"],
+                        )
+
+                        st.session_state["cs_last_result"] = {
+                            "filename": img_file.name,
+                            "suspicion_level": result["suspicion_level"],
+                            "overall_confidence": result["overall_confidence"],
+                            "annotated_image": result["annotated_image"],
+                            "detections": result["detections"],
+                            "tooth_predictions": result["tooth_predictions"],
+                            "modality": result["modality"],
+                        }
+
+                        record_scan(
+                            filename=img_file.name,
+                            suspicion_level=result["suspicion_level"],
+                            confidence=result["overall_confidence"],
+                            num_detections=result["num_detections"],
+                            modality=result["modality"],
+                            turnaround=elapsed,
+                            patient_name=patient_name,
+                            image_bytes=image_bytes,
+                        )
+                        has_successful_scan = True
+                    except Exception as e:
+                        st.error(f"Analysis failed for {img_file.name}: {e}")
+
+                if has_successful_scan:
+                    st.session_state["cs_scan_locked"] = True
+                    st.rerun()
 
     elif sub_page == "Patients":
         st.subheader("Scan History")
@@ -190,8 +247,12 @@ if page == "Caries Screening":
 
         st.markdown("---")
         if st.button("Reset daily stats"):
-            for key in ["cs_today_total", "cs_today_high", "cs_today_review",
-                        "cs_turnaround_times"]:
+            for key in [
+                "cs_today_total",
+                "cs_today_high",
+                "cs_today_review",
+                "cs_turnaround_times",
+            ]:
                 st.session_state[key] = 0 if not key.endswith("times") else []
             st.success("Daily stats reset.")
 

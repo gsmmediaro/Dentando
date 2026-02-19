@@ -15,6 +15,10 @@ _DEFAULTS = {
     "cs_settings_conf": 0.25,
     "cs_settings_modality": "Auto",
     "cs_settings_tooth_assign": False,
+    "cs_active_patient": "",
+    "cs_scan_locked": False,
+    "cs_last_result": None,
+    "cs_uploader_key": 0,
 }
 
 
@@ -22,7 +26,9 @@ def init_state():
     """Initialise defaults and reset counters on day rollover."""
     for key, default in _DEFAULTS.items():
         if key not in st.session_state:
-            st.session_state[key] = default if not isinstance(default, list) else list(default)
+            st.session_state[key] = (
+                default if not isinstance(default, list) else list(default)
+            )
 
     today = date.today().isoformat()
     if st.session_state["cs_session_date"] != today:
@@ -33,9 +39,18 @@ def init_state():
         st.session_state["cs_turnaround_times"] = []
 
 
-def record_scan(filename: str, suspicion_level: str, confidence: float,
-                num_detections: int, modality: str, turnaround: float):
+def record_scan(
+    filename: str,
+    suspicion_level: str,
+    confidence: float,
+    num_detections: int,
+    modality: str,
+    turnaround: float,
+    patient_name: str = "",
+    image_bytes: bytes = b"",
+):
     """Append a scan record and update daily counters."""
+    clean_name = patient_name.strip() or "Pacient anonim"
     record = {
         "timestamp": time.strftime("%H:%M:%S"),
         "date": date.today().isoformat(),
@@ -45,6 +60,8 @@ def record_scan(filename: str, suspicion_level: str, confidence: float,
         "detections": num_detections,
         "modality": modality,
         "turnaround_s": round(turnaround, 2),
+        "patient_name": clean_name,
+        "image_bytes": image_bytes,
     }
     st.session_state["cs_scan_history"].append(record)
     st.session_state["cs_today_total"] += 1
@@ -77,9 +94,18 @@ def get_settings() -> dict:
 
 
 def update_settings(conf=None, modality=None, tooth_assign=None):
+    """Persist user screening settings in session state."""
     if conf is not None:
         st.session_state["cs_settings_conf"] = conf
     if modality is not None:
         st.session_state["cs_settings_modality"] = modality
     if tooth_assign is not None:
         st.session_state["cs_settings_tooth_assign"] = tooth_assign
+
+
+def start_new_scan():
+    """Unlock the analyzer and clear current scan context."""
+    st.session_state["cs_scan_locked"] = False
+    st.session_state["cs_last_result"] = None
+    st.session_state["cs_active_patient"] = ""
+    st.session_state["cs_uploader_key"] += 1

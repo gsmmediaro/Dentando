@@ -125,6 +125,68 @@ CARIES_SCREENING_CSS = f"""
     border-bottom: 1px solid {COLORS["border"]};
     color: {COLORS["text"]};
 }}
+
+/* --- Sidebar patients list --- */
+.cs-side-sessions {{
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    margin-top: 0.25rem;
+}}
+.cs-side-date {{
+    font-size: 0.95rem;
+    color: {COLORS["text"]};
+    font-weight: 600;
+    margin: 0.45rem 0 0.1rem 0;
+}}
+.cs-side-session {{
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    border-radius: 0.7rem;
+    padding: 0.45rem 0.5rem;
+}}
+.cs-side-session-active {{
+    background: #e9e3de;
+}}
+.cs-side-avatar {{
+    width: 1.8rem;
+    height: 1.8rem;
+    min-width: 1.8rem;
+    border: 1px solid #a58f8f;
+    border-radius: 999px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    color: {COLORS["text"]};
+    font-size: 0.82rem;
+    font-weight: 600;
+    background: #f8f4f1;
+}}
+.cs-side-avatar-img {{
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}}
+.cs-side-meta {{
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}}
+.cs-side-name {{
+    color: {COLORS["text"]};
+    font-size: 0.93rem;
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}}
+.cs-side-time {{
+    color: {COLORS["text_muted"]};
+    font-size: 0.8rem;
+    line-height: 1.2;
+}}
 </style>
 """
 
