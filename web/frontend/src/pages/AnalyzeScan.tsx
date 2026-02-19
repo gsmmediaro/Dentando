@@ -3,6 +3,7 @@ import { Upload, X, Loader2, Layers, Gauge, Waypoints } from "lucide-react";
 import * as SelectPrimitive from "@radix-ui/react-select";
 import * as SliderPrimitive from "@radix-ui/react-slider";
 import { AnimatePresence, motion } from "framer-motion";
+import { useLocation } from "react-router-dom";
 import { analyzeImage, getModels, saveScanToFirestore, type AnalysisResult, type ModelInfo } from "../api/client";
 import { useAuth } from "../contexts/AuthContext";
 import FindingsTable from "../components/FindingsTable";
@@ -10,6 +11,7 @@ import FindingsTable from "../components/FindingsTable";
 const ACCEPT = ".jpg,.jpeg,.png,.bmp,.tiff,.tif";
 
 export default function AnalyzeScan() {
+  const location = useLocation();
   const { user } = useAuth();
   const [models, setModels] = useState<ModelInfo[]>([]);
   const [selectedModel, setSelectedModel] = useState("");
@@ -51,6 +53,20 @@ export default function AnalyzeScan() {
     setPreview(url);
     return () => URL.revokeObjectURL(url);
   }, [file]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (!params.has("new")) return;
+    setFile(null);
+    setPreview(null);
+    setResult(null);
+    setError("");
+    setPatientName("");
+    setLoading(false);
+    if (inputRef.current) {
+      inputRef.current.value = "";
+    }
+  }, [location.search]);
 
   const handleFile = useCallback((f: File) => {
     setFile(f);

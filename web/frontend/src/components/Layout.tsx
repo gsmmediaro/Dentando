@@ -1,8 +1,8 @@
-import { NavLink, useLocation } from "react-router-dom";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Plus, BarChart3, Users, LogOut, ChevronRight, ChevronLeft, Menu, X, ArrowLeft } from "lucide-react";
-import { getPatientsFromFirestore, getPatientScansFromFirestore, type PatientSummary, type ScanRecord } from "../api/client";
+import { getPatientsFromFirestore, type PatientSummary } from "../api/client";
 import { useAuth } from "../contexts/AuthContext";
 import quinnLogo from "../../../../quinnnlogo.svg";
 
@@ -33,7 +33,6 @@ function initials(name: string): string {
 
 interface Props {
   children: ReactNode;
-  onSelectPatient?: (scans: ScanRecord[], name: string) => void;
 }
 
 const linkBase: React.CSSProperties = {
@@ -53,8 +52,9 @@ const linkBase: React.CSSProperties = {
   fontFamily: "var(--font-body)",
 };
 
-export default function Layout({ children, onSelectPatient }: Props) {
+export default function Layout({ children }: Props) {
   const location = useLocation();
+  const navigate = useNavigate();
   const isMobile = useIsMobile();
   const { user, userProfile, logout } = useAuth();
   const [panelOpen, setPanelOpen] = useState(false);
@@ -86,17 +86,23 @@ export default function Layout({ children, onSelectPatient }: Props) {
     }
   }, [panelOpen, user, isMobile, drawerOpen, drawerView]);
 
-  const handlePatientClick = async (name: string) => {
-    if (!user) return;
-    setSelectedPatient(name);
-    try {
-      const scans = await getPatientScansFromFirestore(user.uid, name);
-      onSelectPatient?.(scans, name);
-    } catch (error) {
-      console.error("Could not load patient scans", error);
-      onSelectPatient?.([], name);
+  const handleNewScanClick = (event?: React.MouseEvent) => {
+    event?.preventDefault();
+    setSelectedPatient(null);
+    navigate(`/analyze?new=${Date.now()}`);
+    if (isMobile) {
+      setDrawerOpen(false);
+      setDrawerView("menu");
     }
-    if (isMobile) setDrawerOpen(false);
+  };
+
+  const handlePatientClick = async (name: string) => {
+    setSelectedPatient(name);
+    navigate(`/history?patient=${encodeURIComponent(name)}`);
+    if (isMobile) {
+      setDrawerOpen(false);
+      setDrawerView("menu");
+    }
   };
 
   // Close mobile drawer on route change
@@ -223,7 +229,7 @@ export default function Layout({ children, onSelectPatient }: Props) {
                     <nav style={{ display: "flex", flexDirection: "column", gap: 2 }}>
                       <NavLink
                         to="/analyze"
-                        onClick={() => setDrawerOpen(false)}
+                        onClick={handleNewScanClick}
                         style={{
                           ...linkBase,
                           color: "#faf9f6",
@@ -494,6 +500,7 @@ export default function Layout({ children, onSelectPatient }: Props) {
         {/* New session */}
         <NavLink
           to="/analyze"
+          onClick={handleNewScanClick}
           style={{
             ...linkBase,
             color: "#faf9f6",

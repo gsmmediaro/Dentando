@@ -1,5 +1,10 @@
 import { useEffect, useState } from "react";
-import { getHistoryFromFirestore, type ScanRecord } from "../api/client";
+import { useSearchParams } from "react-router-dom";
+import {
+  getHistoryFromFirestore,
+  getPatientScansFromFirestore,
+  type ScanRecord,
+} from "../api/client";
 import { useAuth } from "../contexts/AuthContext";
 
 function badgeLevel(s: string): string {
@@ -10,12 +15,23 @@ const PAGE_SIZE = 20;
 
 export default function History() {
   const { user } = useAuth();
+  const [searchParams] = useSearchParams();
   const [records, setRecords] = useState<ScanRecord[]>([]);
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
+  const selectedPatient = searchParams.get("patient")?.trim() || "";
 
   useEffect(() => {
     if (!user) return;
+    if (selectedPatient) {
+      getPatientScansFromFirestore(user.uid, selectedPatient).then((all) => {
+        const start = page * PAGE_SIZE;
+        const slice = all.slice(start, start + PAGE_SIZE);
+        setRecords(slice);
+        setHasMore(all.length > start + PAGE_SIZE);
+      });
+      return;
+    }
     // Fetch enough records for pagination (simple client-side approach)
     getHistoryFromFirestore(user.uid, (page + 1) * PAGE_SIZE + 1).then((all) => {
       const start = page * PAGE_SIZE;
@@ -23,7 +39,11 @@ export default function History() {
       setRecords(slice);
       setHasMore(all.length > start + PAGE_SIZE);
     });
-  }, [user, page]);
+  }, [user, page, selectedPatient]);
+
+  useEffect(() => {
+    setPage(0);
+  }, [selectedPatient]);
 
   const thStyle: React.CSSProperties = {
     textAlign: "left",
@@ -62,6 +82,18 @@ export default function History() {
       }}>
         Scan history
       </h1>
+      {selectedPatient && (
+        <div style={{
+          width: "100%",
+          marginTop: -20,
+          marginBottom: 20,
+          textAlign: "center",
+          color: "var(--color-ink-secondary)",
+          fontSize: 13,
+        }}>
+          Showing scans for <strong>{selectedPatient}</strong>
+        </div>
+      )}
 
       <div className="mobile-table-scroll" style={{
         width: "100%",
