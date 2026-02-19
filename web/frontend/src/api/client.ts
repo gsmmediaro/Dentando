@@ -20,6 +20,8 @@ const BASE =
   import.meta.env.VITE_API_URL ||
   "";
 const API_BASE = BASE.replace(/\/+$/, "");
+const ENABLE_SOURCE_UPLOAD =
+  import.meta.env.VITE_ENABLE_SOURCE_UPLOAD === "true";
 
 function build_api_url(path: string): string {
   if (API_BASE) return `${API_BASE}${path}`;
@@ -43,6 +45,24 @@ function timestamp_to_millis(value: unknown): number {
     return Number.isNaN(parsed) ? 0 : parsed;
   }
   return 0;
+}
+
+async function with_timeout<T>(promise: Promise<T>, timeout_ms: number): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | null = null;
+  try {
+    return await Promise.race([
+      promise,
+      new Promise<T>((_, reject) => {
+        timer = setTimeout(() => {
+          reject(new Error("Operation timed out"));
+        }, timeout_ms);
+      }),
+    ]);
+  } finally {
+    if (timer) {
+      clearTimeout(timer);
+    }
+  }
 }
 
 export interface Detection {
@@ -162,14 +182,16 @@ export async function saveScanToFirestore(
   const clean_patient_name = normalize_patient_name(scan.patientName);
   let image_url = "";
 
-  try {
-    const safe_name = scan.filename.replace(/[^a-zA-Z0-9._-]/g, "_");
-    const storage_path = `users/${uid}/scans/${Date.now()}_${safe_name}`;
-    const image_ref = ref(storage, storage_path);
-    await uploadBytes(image_ref, scan.file);
-    image_url = await getDownloadURL(image_ref);
-  } catch (error) {
-    console.error("Could not upload scan image to Firebase Storage", error);
+  if (ENABLE_SOURCE_UPLOAD) {
+    try {
+      const safe_name = scan.filename.replace(/[^a-zA-Z0-9._-]/g, "_");
+      const storage_path = `users/${uid}/scans/${Date.now()}_${safe_name}`;
+      const image_ref = ref(storage, storage_path);
+      await with_timeout(uploadBytes(image_ref, scan.file), 8000);
+      image_url = await with_timeout(getDownloadURL(image_ref), 4000);
+    } catch (error) {
+      console.error("Could not upload scan image to Firebase Storage", error);
+    }
   }
 
   const scansRef = collection(db, "users", uid, "scans");

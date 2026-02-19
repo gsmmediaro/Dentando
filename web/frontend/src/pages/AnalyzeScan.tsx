@@ -90,23 +90,25 @@ export default function AnalyzeScan() {
         patientName,
       );
       setResult(res);
-      // Save to Firestore
+      // Save to Firestore in background so UI is never blocked by Storage retries/CORS.
       if (user) {
-        try {
-          await saveScanToFirestore(user.uid, {
-            file,
-            filename: res.filename,
-            patientName,
-            suspicion: res.suspicion_level,
-            confidence: res.overall_confidence,
-            detectionsCount: res.num_detections,
-            modality: res.modality,
-            turnaroundS: res.turnaround_s,
-            annotatedImageUrl: res.annotated_image_url,
-          });
-        } catch (save_error: any) {
-          setError(save_error?.message || "Scan analyzed, but failed to save in Firestore.");
-        }
+        void saveScanToFirestore(user.uid, {
+          file,
+          filename: res.filename,
+          patientName,
+          suspicion: res.suspicion_level,
+          confidence: res.overall_confidence,
+          detectionsCount: res.num_detections,
+          modality: res.modality,
+          turnaroundS: res.turnaround_s,
+          annotatedImageUrl: res.annotated_image_url,
+        }).catch((save_error: unknown) => {
+          const message =
+            save_error instanceof Error
+              ? save_error.message
+              : "Scan analyzed, but failed to save in Firestore.";
+          setError(message);
+        });
       }
     } catch (e: any) {
       setError(e.message || "Analysis failed");
