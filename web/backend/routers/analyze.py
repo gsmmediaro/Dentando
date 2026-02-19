@@ -63,6 +63,9 @@ async def analyze(
     img_path = RESULTS_DIR / img_filename
     cv2.imwrite(str(img_path), result["annotated_image"])
     annotated_url = str(request.url_for("static", path=f"results/{img_filename}"))
+    forwarded_proto = request.headers.get("x-forwarded-proto", "").lower()
+    if forwarded_proto == "https" and annotated_url.startswith("http://"):
+        annotated_url = annotated_url.replace("http://", "https://", 1)
 
     turnaround = round(time.time() - start, 2)
 
