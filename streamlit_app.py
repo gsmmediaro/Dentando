@@ -35,10 +35,12 @@ def discover_trained_models():
     patterns = [
         "runs/detect/runs/dental/*/weights/best.pt",
         "runs/train/*/weights/best.pt",
+        "runs/**/*.pt",
+        "*.pt",
     ]
     found_paths = []
     for pattern in patterns:
-        found_paths.extend(glob.glob(pattern))
+        found_paths.extend(glob.glob(pattern, recursive=True))
 
     unique_paths = []
     seen = set()
