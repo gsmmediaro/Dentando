@@ -2,55 +2,86 @@ import type { Detection } from "../api/client";
 
 const thStyle: React.CSSProperties = {
   textAlign: "left",
-  padding: "12px 16px",
+  padding: "10px 16px",
   fontWeight: 500,
-  fontFamily: "var(--font-display)",
+  fontFamily: "var(--font-body)",
   color: "var(--color-ink-tertiary)",
   fontSize: 11,
   textTransform: "uppercase",
-  letterSpacing: "0.06em",
+  letterSpacing: "0.05em",
   borderBottom: "1px solid var(--border-color)",
+  background: "var(--color-surface-hover)",
 };
 
 const tdStyle: React.CSSProperties = {
   padding: "12px 16px",
   borderBottom: "1px solid var(--border-color)",
   color: "var(--color-ink-secondary)",
+  fontSize: 13,
+  fontFamily: "var(--font-body)",
 };
+
+function confBadge(confidence: number): React.CSSProperties {
+  const pct = confidence * 100;
+  const color = pct >= 80 ? "var(--color-high)" : pct >= 50 ? "var(--color-moderate)" : "var(--color-ink-tertiary)";
+  const bg = pct >= 80 ? "var(--color-high-bg)" : pct >= 50 ? "var(--color-moderate-bg)" : "var(--color-surface-inset)";
+  return {
+    display: "inline-flex",
+    padding: "3px 8px",
+    borderRadius: 6,
+    fontSize: 12,
+    fontWeight: 600,
+    fontVariantNumeric: "tabular-nums",
+    color,
+    background: bg,
+    fontFamily: "var(--font-body)",
+  };
+}
 
 export default function FindingsTable({ detections }: { detections: Detection[] }) {
   if (detections.length === 0) {
-    return <p style={{ color: "var(--color-ink-tertiary)", fontSize: 13 }}>No detections found.</p>;
+    return null;
   }
 
   return (
     <div style={{
       width: "100%",
       background: "var(--color-surface)",
-      border: "1px solid var(--border-color)",
-      borderRadius: 10,
+      borderRadius: 14,
       overflow: "hidden",
+      boxShadow: "0 0 0 1px rgba(45, 42, 36, 0.06), 0 1px 2px rgba(0,0,0,0.03)",
     }}>
-      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
-        <thead>
-          <tr>
-            <th style={thStyle}>Class</th>
-            <th style={thStyle}>Confidence</th>
-            <th style={thStyle}>Location</th>
-          </tr>
-        </thead>
-        <tbody>
-          {detections.map((d, i) => (
-            <tr key={i}>
-              <td style={{ ...tdStyle, fontWeight: 500, color: "var(--color-ink)" }}>{d.class_name}</td>
-              <td style={tdStyle}>{(d.confidence * 100).toFixed(1)}%</td>
-              <td style={{ ...tdStyle, fontFamily: "monospace", fontSize: 11, color: "var(--color-ink-tertiary)" }}>
-                [{d.bbox.map((v) => v.toFixed(0)).join(", ")}]
-              </td>
+      <div className="mobile-table-scroll">
+        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+          <thead>
+            <tr>
+              <th style={thStyle}>Class</th>
+              <th style={thStyle}>Confidence</th>
+              <th style={thStyle}>Location</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {detections.map((d, i) => (
+              <tr
+                key={i}
+                style={{ transition: "background 0.1s" }}
+                onMouseEnter={(e) => e.currentTarget.style.background = "var(--color-surface-hover)"}
+                onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
+              >
+                <td style={{ ...tdStyle, fontWeight: 500, color: "var(--color-ink)" }}>{d.class_name}</td>
+                <td style={tdStyle}>
+                  <span style={confBadge(d.confidence)}>
+                    {(d.confidence * 100).toFixed(1)}%
+                  </span>
+                </td>
+                <td style={{ ...tdStyle, fontFamily: "'SF Mono', 'Fira Code', monospace", fontSize: 11, color: "var(--color-ink-tertiary)", letterSpacing: "0.02em" }}>
+                  [{d.bbox.map((v) => v.toFixed(0)).join(", ")}]
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

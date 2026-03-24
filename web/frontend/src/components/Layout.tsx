@@ -1,7 +1,7 @@
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
-import { Plus, BarChart3, Users, LogOut, ChevronRight, ChevronLeft, Menu, X, ArrowLeft } from "lucide-react";
+import { Plus, Users, LogOut, ChevronRight, Menu, X, ArrowLeft, MessageCircle, HelpCircle, Settings, CornerDownRight } from "lucide-react";
 import { getPatientsFromFirestore, type PatientSummary } from "../api/client";
 import { useAuth } from "../contexts/AuthContext";
 import quinnLogo from "../../../../quinnnlogo.svg";
@@ -56,7 +56,7 @@ export default function Layout({ children }: Props) {
   const location = useLocation();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
-  const { user, userProfile, logout } = useAuth();
+  const { user, userProfile, logout, setShowAuthGate } = useAuth();
   const [panelOpen, setPanelOpen] = useState(false);
   const [patients, setPatients] = useState<PatientSummary[]>([]);
   const [selectedPatient, setSelectedPatient] = useState<string | null>(null);
@@ -67,6 +67,7 @@ export default function Layout({ children }: Props) {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [drawerView, setDrawerView] = useState<"menu" | "patients">("menu");
   const [mobileProfileOpen, setMobileProfileOpen] = useState(false);
+  const [settingsPopover, setSettingsPopover] = useState(false);
 
   const refreshPatients = useCallback(() => {
     if (!user) return;
@@ -130,14 +131,59 @@ export default function Layout({ children }: Props) {
     }
   }, [drawerOpen]);
 
-  const isDashboard = location.pathname === "/dashboard";
-
   const displayName = userProfile
     ? `${userProfile.firstName} ${userProfile.lastName}`.trim()
     : user?.displayName || user?.email || "";
   const userInitials = displayName
     ? initials(displayName)
     : (user?.email?.[0]?.toUpperCase() || "?");
+
+  /* ───────────────────── LOGGED-OUT LAYOUT ───────────────────── */
+  if (!user) {
+    return (
+      <div style={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}>
+        {/* Minimal top bar */}
+        <div style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          padding: isMobile ? "12px 16px" : "12px 24px",
+          background: "var(--color-bg)",
+          position: "sticky",
+          top: 0,
+          zIndex: 10,
+        }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <img src={quinnLogo} alt="Quinn" style={{ width: 24, height: 24 }} />
+            <span style={{ fontFamily: "var(--font-display)", fontSize: 18, fontWeight: 500, color: "var(--color-ink)" }}>Quinn</span>
+          </div>
+          <button
+            onClick={() => setShowAuthGate(true)}
+            style={{
+              padding: "8px 20px",
+              borderRadius: 8,
+              border: "none",
+              background: "var(--color-ink)",
+              color: "white",
+              fontSize: 13,
+              fontWeight: 500,
+              cursor: "pointer",
+              fontFamily: "var(--font-body)",
+              transition: "opacity 0.15s",
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.opacity = "0.88"}
+            onMouseLeave={(e) => e.currentTarget.style.opacity = "1"}
+          >
+            Log in
+          </button>
+        </div>
+        {/* Main content */}
+        <div style={{ flex: 1 }}>
+          {children}
+        </div>
+      </div>
+    );
+  }
 
   /* ───────────────────── MOBILE LAYOUT ───────────────────── */
   if (isMobile) {
@@ -174,9 +220,7 @@ export default function Layout({ children }: Props) {
             </button>
             <span style={{ fontFamily: "var(--font-display)", fontSize: 18, fontWeight: 500, color: "var(--color-ink)" }}>Quinn</span>
           </div>
-          <div style={{ fontSize: 11, color: "var(--color-ink-tertiary)", textAlign: "center", flex: 1, padding: "0 8px" }}>
-            AI decision support tool
-          </div>
+          <div style={{ flex: 1 }} />
         </div>
 
         {/* Main content */}
@@ -238,22 +282,18 @@ export default function Layout({ children }: Props) {
                     </div>
 
                     <nav style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                      <NavLink
-                        to="/analyze"
+                      <button
                         onClick={handleNewScanClick}
                         style={{
                           ...linkBase,
-                          color: "#faf9f6",
-                          background: "var(--color-leaf)",
-                          borderRadius: 8,
-                          marginBottom: 8,
-                          justifyContent: "center",
-                          textAlign: "center",
+                          color: "var(--color-leaf)",
+                          background: "transparent",
+                          gap: 10,
                         }}
                       >
-                        <Plus size={16} />
-                        New scan
-                      </NavLink>
+                        <Plus size={18} strokeWidth={2.5} />
+                        New Scan
+                      </button>
 
                       <button
                         style={{
@@ -264,35 +304,9 @@ export default function Layout({ children }: Props) {
                         onClick={() => setDrawerView("patients")}
                       >
                         <Users size={16} />
-                        <span style={{ flex: 1 }}>Patients</span>
+                        <span style={{ flex: 1 }}>Recent Scans</span>
                         <ChevronRight size={14} style={{ color: "var(--color-ink-tertiary)" }} />
                       </button>
-
-                      <NavLink
-                        to="/dashboard"
-                        onClick={() => setDrawerOpen(false)}
-                        style={{
-                          ...linkBase,
-                          color: isDashboard ? "var(--color-ink)" : "var(--color-ink-secondary)",
-                          background: isDashboard ? "var(--color-surface-hover)" : "transparent",
-                        }}
-                      >
-                        <BarChart3 size={16} />
-                        Analytics
-                      </NavLink>
-
-                      <NavLink
-                        to="/history"
-                        onClick={() => setDrawerOpen(false)}
-                        style={{
-                          ...linkBase,
-                          color: location.pathname === "/history" ? "var(--color-ink)" : "var(--color-ink-secondary)",
-                          background: location.pathname === "/history" ? "var(--color-surface-hover)" : "transparent",
-                        }}
-                      >
-                        <BarChart3 size={16} />
-                        History
-                      </NavLink>
                     </nav>
 
                     {/* Profile section */}
@@ -467,317 +481,332 @@ export default function Layout({ children }: Props) {
   }
 
   /* ───────────────────── DESKTOP LAYOUT ───────────────────── */
+  const sidebarOpen = panelOpen;
+  const setSidebarOpen = setPanelOpen;
+
   return (
-    <div style={{ display: "flex", minHeight: "100vh" }}>
-      {/* Sidebar */}
-      <aside style={{
-        width: "var(--sidebar-w)",
-        background: "var(--color-bg)",
-        borderRight: "1px solid var(--border-color)",
-        padding: "20px 12px",
+    <div style={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}>
+      {/* Top bar */}
+      <div style={{
         display: "flex",
-        flexDirection: "column",
-        position: "fixed",
+        alignItems: "center",
+        padding: "12px 24px",
+        background: "var(--color-bg)",
+        position: "sticky",
         top: 0,
-        left: 0,
-        bottom: 0,
-        zIndex: 20,
+        zIndex: 10,
       }}>
-        {/* Brand */}
-        <div style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 12,
-          padding: "8px 12px",
-          marginBottom: 20,
-          fontFamily: "var(--font-display)",
-          fontSize: 20,
-          fontWeight: 500,
-          color: "var(--color-ink)",
-        }}>
-          <img
-            src={quinnLogo}
-            alt="Quinn logo"
-            style={{
-              width: 28,
-              height: 28,
-              display: "block",
-              flexShrink: 0,
-            }}
-          />
-          <span style={{ fontFamily: "var(--font-display)" }}>Quinn</span>
-        </div>
-
-        {/* New session */}
-        <NavLink
-          to="/analyze"
-          onClick={handleNewScanClick}
+        {/* Hamburger button */}
+        <button
+          onClick={() => { setSidebarOpen(true); refreshPatients(); }}
+          aria-label="Open menu"
           style={{
-            ...linkBase,
-            color: "#faf9f6",
-            background: "var(--color-leaf)",
-            borderRadius: 8,
+            width: 40,
+            height: 40,
+            borderRadius: "50%",
+            border: "1px solid var(--border-color)",
+            background: "var(--color-surface)",
+            display: "flex",
+            alignItems: "center",
             justifyContent: "center",
-            textAlign: "center",
+            cursor: "pointer",
+            color: "var(--color-ink-secondary)",
+            transition: "border-color 0.15s, box-shadow 0.15s",
+            flexShrink: 0,
           }}
-          onMouseEnter={(e) => e.currentTarget.style.background = "var(--color-leaf-hover)"}
-          onMouseLeave={(e) => e.currentTarget.style.background = "var(--color-leaf)"}
+          onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--border-emphasis)"; e.currentTarget.style.boxShadow = "0 1px 4px rgba(0,0,0,0.06)"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--border-color)"; e.currentTarget.style.boxShadow = "none"; }}
         >
-          <Plus size={16} />
-          New scan
-        </NavLink>
+          <Menu size={18} />
+        </button>
 
-        {/* Nav */}
-        <nav style={{ display: "flex", flexDirection: "column", gap: 1, marginTop: 16 }}>
-          <button
-            style={{
-              ...linkBase,
-              color: panelOpen ? "var(--color-ink)" : "var(--color-ink-secondary)",
-              background: panelOpen ? "var(--color-surface)" : "transparent",
-            }}
-            onMouseEnter={(e) => { if (!panelOpen) e.currentTarget.style.background = "var(--color-surface-hover)"; }}
-            onMouseLeave={(e) => { if (!panelOpen) e.currentTarget.style.background = "transparent"; }}
-            onClick={togglePanel}
-          >
-            <Users size={16} />
-            <span style={{ flex: 1 }}>Patients</span>
-            {panelOpen
-              ? <ChevronLeft size={14} style={{ color: "var(--color-ink-tertiary)" }} />
-              : <ChevronRight size={14} style={{ color: "var(--color-ink-tertiary)" }} />
-            }
-          </button>
-          <NavLink
-            to="/dashboard"
-            end
-            style={{
-              ...linkBase,
-              color: isDashboard ? "var(--color-ink)" : "var(--color-ink-secondary)",
-              background: isDashboard ? "var(--color-surface)" : "transparent",
-            }}
-            onMouseEnter={(e) => { if (!isDashboard) e.currentTarget.style.background = "var(--color-surface-hover)"; }}
-            onMouseLeave={(e) => { if (!isDashboard) e.currentTarget.style.background = "transparent"; }}
-          >
-            <BarChart3 size={16} />
-            Analytics
-          </NavLink>
-        </nav>
+        <div style={{ flex: 1 }} />
+      </div>
 
-        {/* Profile — at very bottom */}
-        {user && (
-          <div ref={profileRef} style={{ marginTop: "auto", position: "relative" }}>
-            <button
-              onClick={() => setProfileOpen(!profileOpen)}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 10,
-                padding: "10px 12px",
-                borderRadius: 8,
-                width: "100%",
-                border: "none",
-                cursor: "pointer",
-                background: profileOpen ? "var(--color-surface)" : "transparent",
-                transition: "background 0.15s",
-                fontFamily: "var(--font-body)",
-                textAlign: "left",
-              }}
-              onMouseEnter={(e) => { if (!profileOpen) e.currentTarget.style.background = "var(--color-surface-hover)"; }}
-              onMouseLeave={(e) => { if (!profileOpen) e.currentTarget.style.background = profileOpen ? "var(--color-surface)" : "transparent"; }}
-            >
-              <div style={{
-                width: 30,
-                height: 30,
-                borderRadius: "50%",
-                background: "var(--color-leaf-subtle)",
-                color: "var(--color-leaf-text)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: 12,
-                fontWeight: 600,
-                flexShrink: 0,
-              }}>
-                {userInitials}
-              </div>
-              <div style={{ minWidth: 0, flex: 1 }}>
-                <div style={{
-                  fontSize: 13,
-                  fontWeight: 500,
-                  color: "var(--color-ink)",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
-                }}>
-                  {displayName || user.email}
-                </div>
-              </div>
-            </button>
-
-            {/* Dropdown */}
-            {profileOpen && (
-              <>
-                <div
-                  style={{ position: "fixed", inset: 0, zIndex: 30 }}
-                  onClick={() => setProfileOpen(false)}
-                />
-                <div style={{
-                  position: "absolute",
-                  bottom: "calc(100% + 6px)",
-                  left: 0,
-                  right: 0,
-                  background: "var(--color-surface)",
-                  border: "1px solid var(--border-emphasis)",
-                  borderRadius: 10,
-                  boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
-                  padding: 4,
-                  zIndex: 31,
-                }}>
-                  <button
-                    onClick={() => { setProfileOpen(false); logout(); }}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 10,
-                      padding: "8px 12px",
-                      width: "100%",
-                      border: "none",
-                      borderRadius: 6,
-                      cursor: "pointer",
-                      background: "transparent",
-                      color: "var(--color-ink-secondary)",
-                      fontSize: 13,
-                      fontWeight: 500,
-                      fontFamily: "var(--font-body)",
-                      transition: "background 0.1s",
-                      textAlign: "left",
-                    }}
-                    onMouseEnter={(e) => e.currentTarget.style.background = "var(--color-surface-hover)"}
-                    onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
-                  >
-                    <LogOut size={14} />
-                    Sign out
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
-        )}
-      </aside>
-
-      {/* Patients panel */}
+      {/* Sidebar drawer overlay */}
       <AnimatePresence>
-        {panelOpen && (
-          <motion.div
-            style={{
-              position: "fixed",
-              top: 0,
-              left: "var(--sidebar-w)",
-              bottom: 0,
-              width: "var(--panel-w)",
-              background: "var(--color-surface)",
-              borderRight: "1px solid var(--border-color)",
-              zIndex: 15,
-              overflowY: "auto",
-              padding: "20px 0",
-            }}
-            initial={{ x: -280, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            exit={{ x: -280, opacity: 0 }}
-            transition={{ type: "spring", stiffness: 300, damping: 30 }}
-          >
-            <div style={{
-              padding: "8px 20px 16px",
-              fontFamily: "var(--font-display)",
-              fontSize: 18,
-              fontWeight: 500,
-              borderBottom: "1px solid var(--border-color)",
-              marginBottom: 12,
-            }}>
-              <span style={{ fontFamily: "var(--font-display)" }}>Patients</span>
-            </div>
-            {patients.length === 0 ? (
-              <div style={{ textAlign: "center", padding: "32px 20px", color: "var(--color-ink-tertiary)" }}>
-                <div style={{ fontSize: 13 }}>No patients yet.</div>
-                <div style={{ fontSize: 12, marginTop: 4 }}>Scans with names will appear here.</div>
-              </div>
-            ) : (
-              patients.map((p) => (
+        {sidebarOpen && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              onClick={() => { setSidebarOpen(false); setSelectedPatient(null); }}
+              style={{
+                position: "fixed",
+                inset: 0,
+                background: "rgba(0,0,0,0.25)",
+                backdropFilter: "blur(2px)",
+                zIndex: 30,
+              }}
+            />
+            {/* Sidebar panel */}
+            <motion.aside
+              initial={{ x: -320 }}
+              animate={{ x: 0 }}
+              exit={{ x: -320 }}
+              transition={{ type: "spring", stiffness: 320, damping: 32 }}
+              style={{
+                position: "fixed",
+                top: 0,
+                left: 0,
+                bottom: 0,
+                width: 300,
+                background: "var(--color-surface)",
+                zIndex: 35,
+                display: "flex",
+                flexDirection: "column",
+                boxShadow: "4px 0 24px rgba(0,0,0,0.08)",
+              }}
+            >
+              {/* Header */}
+              <div style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                padding: "20px 20px 16px",
+              }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <img src={quinnLogo} alt="Quinn" style={{ width: 24, height: 24 }} />
+                  <span style={{ fontFamily: "var(--font-display)", fontSize: 20, fontWeight: 500, color: "var(--color-ink)" }}>Quinn</span>
+                </div>
                 <button
-                  key={p.name}
-                  onClick={() => handlePatientClick(p.name)}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 12,
-                    padding: "10px 20px",
-                    width: "100%",
-                    textAlign: "left",
-                    border: "none",
-                    cursor: "pointer",
-                    transition: "background 0.12s",
-                    color: "var(--color-ink)",
-                    fontFamily: "var(--font-body)",
-                    fontSize: 14,
-                    background: selectedPatient === p.name ? "var(--color-leaf-subtle)" : "transparent",
-                  }}
+                  onClick={() => { setSidebarOpen(false); setSelectedPatient(null); }}
+                  style={{ background: "none", border: "none", cursor: "pointer", padding: 6, color: "var(--color-ink-tertiary)", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 8 }}
+                  onMouseEnter={(e) => e.currentTarget.style.color = "var(--color-ink)"}
+                  onMouseLeave={(e) => e.currentTarget.style.color = "var(--color-ink-tertiary)"}
                 >
+                  <X size={20} />
+                </button>
+              </div>
+
+              {/* User profile */}
+              {user && (
+                <div style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 10,
+                  padding: "8px 20px 16px",
+                }}>
                   <div style={{
                     width: 32,
                     height: 32,
                     borderRadius: "50%",
-                    background: "var(--color-surface-inset)",
+                    background: "var(--color-leaf-subtle)",
+                    color: "var(--color-leaf-text)",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    fontSize: 13,
+                    fontSize: 12,
                     fontWeight: 600,
-                    color: "var(--color-ink-secondary)",
                     flexShrink: 0,
                   }}>
-                    {initials(p.name)}
+                    {userInitials}
                   </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontWeight: 500, lineHeight: 1.3 }}>{p.name}</div>
-                    <div style={{ fontSize: 12, color: "var(--color-ink-tertiary)" }}>
-                      {p.scan_count} {p.scan_count === 1 ? "scan" : "scans"}
-                    </div>
-                  </div>
-                  <div style={{
-                    width: 8,
-                    height: 8,
-                    borderRadius: "50%",
-                    background: suspicionDotColor(p.worst_suspicion),
-                    flexShrink: 0,
-                  }} />
+                  <span style={{ fontSize: 14, fontWeight: 500, color: "var(--color-ink)" }}>
+                    {displayName || user.email}
+                  </span>
+                </div>
+              )}
+
+              {/* Navigation */}
+              <nav style={{ display: "flex", flexDirection: "column", gap: 2, padding: "0 16px 0" }}>
+                <button
+                  onClick={(e) => { handleNewScanClick(e); setSidebarOpen(false); }}
+                  style={{
+                    ...linkBase,
+                    color: "var(--color-leaf)",
+                    background: "transparent",
+                    gap: 10,
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.background = "var(--color-surface-hover)"}
+                  onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
+                >
+                  <Plus size={18} strokeWidth={2.5} style={{ color: "var(--color-leaf)" }} />
+                  New Scan
                 </button>
-              ))
-            )}
-          </motion.div>
+              </nav>
+
+              {/* Recent Patients section */}
+              <div style={{
+                flex: 1,
+                overflowY: "auto",
+                padding: "0 16px",
+              }}>
+                <div style={{
+                  padding: "24px 12px 10px",
+                  fontSize: 13,
+                  fontWeight: 600,
+                  color: "var(--color-ink)",
+                }}>
+                  Recent Scans
+                </div>
+                {patients.length === 0 ? (
+                  <div style={{ padding: "16px 12px", color: "var(--color-ink-tertiary)", fontSize: 13 }}>
+                    No scans yet.
+                  </div>
+                ) : (
+                  <>
+                    {patients.slice(0, 5).map((p) => (
+                      <button
+                        key={p.name}
+                        onClick={() => { handlePatientClick(p.name); setSidebarOpen(false); }}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 10,
+                          padding: "9px 12px",
+                          width: "100%",
+                          textAlign: "left",
+                          border: "none",
+                          borderRadius: 6,
+                          cursor: "pointer",
+                          transition: "background 0.12s",
+                          color: "var(--color-ink)",
+                          fontFamily: "var(--font-body)",
+                          fontSize: 14,
+                          background: selectedPatient === p.name ? "var(--color-surface-hover)" : "transparent",
+                        }}
+                        onMouseEnter={(e) => { if (selectedPatient !== p.name) e.currentTarget.style.background = "var(--color-surface-hover)"; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.background = selectedPatient === p.name ? "var(--color-surface-hover)" : "transparent"; }}
+                      >
+                        <MessageCircle size={16} style={{ color: "var(--color-ink-tertiary)", flexShrink: 0 }} />
+                        <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name}</span>
+                      </button>
+                    ))}
+                    <button
+                      onClick={() => { navigate("/history"); setSidebarOpen(false); }}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 10,
+                        padding: "9px 12px",
+                        width: "100%",
+                        textAlign: "left",
+                        border: "none",
+                        borderRadius: 6,
+                        cursor: "pointer",
+                        transition: "background 0.12s",
+                        color: "var(--color-ink-secondary)",
+                        fontFamily: "var(--font-body)",
+                        fontSize: 14,
+                        background: "transparent",
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.background = "var(--color-surface-hover)"}
+                      onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
+                    >
+                      <CornerDownRight size={16} style={{ color: "var(--color-ink-tertiary)", flexShrink: 0 }} />
+                      View all
+                    </button>
+                  </>
+                )}
+              </div>
+
+              {/* Bottom section */}
+              <div style={{ padding: "0 16px 16px", display: "flex", flexDirection: "column", gap: 2 }}>
+                <button
+                  style={{
+                    ...linkBase,
+                    color: "var(--color-ink)",
+                    background: "transparent",
+                    gap: 10,
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.background = "var(--color-surface-hover)"}
+                  onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
+                >
+                  <HelpCircle size={16} style={{ color: "var(--color-ink-secondary)" }} />
+                  Help & Resources
+                </button>
+                <div style={{ position: "relative" }}>
+                  <button
+                    onClick={() => setSettingsPopover(!settingsPopover)}
+                    style={{
+                      ...linkBase,
+                      color: "var(--color-ink)",
+                      background: settingsPopover ? "var(--color-surface-hover)" : "transparent",
+                      gap: 10,
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.background = "var(--color-surface-hover)"}
+                    onMouseLeave={(e) => { if (!settingsPopover) e.currentTarget.style.background = "transparent"; }}
+                  >
+                    <Settings size={16} style={{ color: "var(--color-ink-secondary)" }} />
+                    Settings
+                  </button>
+                  {settingsPopover && (
+                    <>
+                      <div
+                        style={{ position: "fixed", inset: 0, zIndex: 40 }}
+                        onClick={() => setSettingsPopover(false)}
+                      />
+                      <div style={{
+                        position: "absolute",
+                        bottom: "calc(100% + 6px)",
+                        left: 0,
+                        right: 0,
+                        background: "var(--color-surface)",
+                        borderRadius: 14,
+                        boxShadow: "0 4px 24px rgba(0,0,0,0.12), 0 0 0 1px rgba(0,0,0,0.04)",
+                        padding: 6,
+                        zIndex: 41,
+                      }}>
+                        <button
+                          onClick={() => { setSettingsPopover(false); setSidebarOpen(false); navigate("/settings"); }}
+                          style={{
+                            display: "flex", alignItems: "center", gap: 10,
+                            padding: "11px 14px", width: "100%", border: "none",
+                            borderRadius: 8, cursor: "pointer", background: "transparent",
+                            color: "var(--color-ink)", fontSize: 14, fontWeight: 500,
+                            fontFamily: "var(--font-body)", textAlign: "left",
+                            transition: "background 0.1s",
+                          }}
+                          onMouseEnter={(e) => e.currentTarget.style.background = "var(--color-surface-hover)"}
+                          onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
+                        >
+                          Account Settings
+                        </button>
+                        <button
+                          onClick={() => { setSettingsPopover(false); setSidebarOpen(false); logout(); }}
+                          style={{
+                            display: "flex", alignItems: "center", gap: 10,
+                            padding: "11px 14px", width: "100%", border: "none",
+                            borderRadius: 8, cursor: "pointer", background: "transparent",
+                            color: "var(--color-ink)", fontSize: 14, fontWeight: 500,
+                            fontFamily: "var(--font-body)", textAlign: "left",
+                            transition: "background 0.1s",
+                          }}
+                          onMouseEnter={(e) => e.currentTarget.style.background = "var(--color-surface-hover)"}
+                          onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
+                        >
+                          Log out
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                <div style={{
+                  padding: "12px 12px 0",
+                  fontSize: 11,
+                  lineHeight: 1.5,
+                  color: "var(--color-ink-tertiary)",
+                }}>
+                  Always discuss Quinn output with a dentist. Quinn is an AI assistant, not a licensed practitioner, and does not provide medical advice or care. By using Quinn, you agree to our{" "}
+                  <a href="/terms" style={{ color: "var(--color-ink-secondary)", textDecoration: "underline" }}>Terms of Service</a>{" & "}
+                  <a href="/privacy" style={{ color: "var(--color-ink-secondary)", textDecoration: "underline" }}>Privacy Policy</a>.
+                </div>
+                <div style={{ padding: "6px 12px 0", fontSize: 11, color: "var(--color-ink-ghost)" }}>
+                  v1.0.0
+                </div>
+              </div>
+            </motion.aside>
+          </>
         )}
       </AnimatePresence>
 
-      {/* Main content */}
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          minHeight: "100vh",
-          position: "absolute",
-          top: 0,
-          right: 0,
-          bottom: 0,
-          left: panelOpen ? "calc(var(--sidebar-w) + var(--panel-w))" : "var(--sidebar-w)",
-        }}
-      >
-        <div style={{
-          textAlign: "center",
-          padding: "8px 16px",
-          fontSize: 12,
-          color: "var(--color-ink-tertiary)",
-          borderBottom: "1px solid var(--border-color)",
-        }}>
-          AI decision support tool &mdash; does not replace clinical diagnosis
-        </div>
+      {/* Main content — full width */}
+      <div style={{ flex: 1 }}>
         {children}
       </div>
     </div>

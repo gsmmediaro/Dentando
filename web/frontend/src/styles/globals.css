@@ -50,6 +50,11 @@
 
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-display);
+  text-wrap: balance;
+}
+
+p {
+  text-wrap: pretty;
 }
 
 /* Borders — whisper-quiet warm (CSS vars, not theme tokens) */
@@ -98,6 +103,20 @@ input:focus-visible,
 select:focus-visible,
 [role="button"]:focus, [role="button"]:focus-visible {
   outline: none;
+}
+
+/* Auth modal fade-in */
+@keyframes authFadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Reduced motion: respect user preference */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 /* Scrollbar */

@@ -1,64 +1,100 @@
-import { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { AnimatePresence, motion } from "framer-motion";
+import { MessageCircle, MoreVertical, Send, FileText, Trash2, X } from "lucide-react";
 import {
+  deleteScanFromFirestore,
   getHistoryFromFirestore,
   getPatientScansFromFirestore,
   type ScanRecord,
 } from "../api/client";
 import { useAuth } from "../contexts/AuthContext";
+import { toast } from "sonner";
 
-function badgeLevel(s: string): string {
-  return `verdict-badge ${s.toLowerCase()}`;
+function timeAgo(timestamp: string | number): string {
+  const ms = typeof timestamp === "string" ? new Date(timestamp).getTime() : timestamp;
+  const seconds = Math.floor((Date.now() - ms) / 1000);
+  if (seconds < 60) return "just now";
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days}d ago`;
+  if (days < 30) return `${Math.floor(days / 7)}w ago`;
+  if (days < 365) return `${Math.floor(days / 30)} month${Math.floor(days / 30) !== 1 ? "s" : ""} ago`;
+  return `${Math.floor(days / 365)}y ago`;
 }
 
-const PAGE_SIZE = 20;
+function suspicionColor(s: string) {
+  switch (s) {
+    case "HIGH": return "var(--color-high)";
+    case "MODERATE": return "var(--color-moderate)";
+    case "REVIEW": return "var(--color-review)";
+    default: return "var(--color-low)";
+  }
+}
 
 export default function History() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [records, setRecords] = useState<ScanRecord[]>([]);
-  const [page, setPage] = useState(0);
-  const [hasMore, setHasMore] = useState(true);
+  const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<ScanRecord | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
   const selectedPatient = searchParams.get("patient")?.trim() || "";
+  const isMobile = window.innerWidth <= 768;
 
-  useEffect(() => {
+  const loadRecords = () => {
     if (!user) return;
     if (selectedPatient) {
-      getPatientScansFromFirestore(user.uid, selectedPatient).then((all) => {
-        const start = page * PAGE_SIZE;
-        const slice = all.slice(start, start + PAGE_SIZE);
-        setRecords(slice);
-        setHasMore(all.length > start + PAGE_SIZE);
-      });
+      getPatientScansFromFirestore(user.uid, selectedPatient).then(setRecords);
       return;
     }
-    // Fetch enough records for pagination (simple client-side approach)
-    getHistoryFromFirestore(user.uid, (page + 1) * PAGE_SIZE + 1).then((all) => {
-      const start = page * PAGE_SIZE;
-      const slice = all.slice(start, start + PAGE_SIZE);
-      setRecords(slice);
-      setHasMore(all.length > start + PAGE_SIZE);
-    });
-  }, [user, page, selectedPatient]);
-
-  useEffect(() => {
-    setPage(0);
-  }, [selectedPatient]);
-
-  const thStyle: React.CSSProperties = {
-    textAlign: "left",
-    padding: "12px 16px",
-    fontWeight: 500,
-    color: "var(--color-ink-tertiary)",
-    fontSize: 11,
-    textTransform: "uppercase",
-    letterSpacing: "0.06em",
-    borderBottom: "1px solid var(--border-color)",
+    getHistoryFromFirestore(user.uid, 100).then(setRecords);
   };
 
-  const tdStyle: React.CSSProperties = {
-    padding: "12px 16px",
-    borderBottom: "1px solid var(--border-color)",
+  useEffect(loadRecords, [user, selectedPatient]);
+
+  // Close menu on click outside
+  useEffect(() => {
+    if (!menuOpenId) return;
+    const handler = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpenId(null);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [menuOpenId]);
+
+  const handleNewScan = () => {
+    navigate(`/analyze?new=${Date.now()}`);
+  };
+
+  const handleOpen = (r: ScanRecord) => {
+    setMenuOpenId(null);
+    if (r.patient_name) {
+      navigate(`/analyze?patient=${encodeURIComponent(r.patient_name)}`);
+    }
+  };
+
+  const handleDelete = (r: ScanRecord) => {
+    setMenuOpenId(null);
+    setDeleteTarget(r);
+  };
+
+  const confirmDelete = async () => {
+    if (!user || !deleteTarget) return;
+    setDeleting(true);
+    await deleteScanFromFirestore(user.uid, deleteTarget.id);
+    setRecords((prev) => prev.filter((rec) => rec.id !== deleteTarget.id));
+    window.dispatchEvent(new Event("quinn:patients-updated"));
+    setDeleting(false);
+    setDeleteTarget(null);
+    toast.success("Your scan was successfully deleted.");
   };
 
   return (
@@ -67,103 +103,362 @@ export default function History() {
       display: "flex",
       flexDirection: "column",
       alignItems: "center",
-      padding: window.innerWidth <= 768 ? "24px 16px" : "40px 32px",
-      maxWidth: 1000,
+      padding: isMobile ? "32px 20px" : "60px 32px",
+      maxWidth: 680,
       width: "100%",
       margin: "0 auto",
     }}>
+      {/* Header */}
       <h1 style={{
         fontFamily: "var(--font-display)",
-        fontSize: 28,
+        fontSize: isMobile ? 32 : 42,
         fontWeight: 400,
         color: "var(--color-ink)",
-        marginBottom: 32,
-        textAlign: "center",
+        marginBottom: 8,
+        textAlign: "left",
+        width: "100%",
+        textWrap: "balance",
       }}>
-        Scan history
+        Your Scans
       </h1>
-      {selectedPatient && (
-        <div style={{
+      <p style={{
+        fontSize: 15,
+        color: "var(--color-ink-secondary)",
+        marginBottom: 32,
+        textAlign: "left",
+        width: "100%",
+      }}>
+        {selectedPatient
+          ? <>Showing scans for <strong style={{ color: "var(--color-ink)" }}>{selectedPatient}</strong></>
+          : "All your previous and ongoing scans"
+        }
+      </p>
+
+      {/* New scan input */}
+      <div
+        onClick={handleNewScan}
+        style={{
           width: "100%",
-          marginTop: -20,
-          marginBottom: 20,
-          textAlign: "center",
-          color: "var(--color-ink-secondary)",
-          fontSize: 13,
+          display: "flex",
+          alignItems: "center",
+          background: "var(--color-surface)",
+          borderRadius: 14,
+          boxShadow: "0 0 0 1px rgba(45, 42, 36, 0.06), 0 1px 2px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.03)",
+          cursor: "pointer",
+          overflow: "hidden",
+          marginBottom: 8,
+          transition: "box-shadow 0.2s",
+        }}
+        onMouseEnter={(e) => e.currentTarget.style.boxShadow = "0 0 0 1px rgba(45, 42, 36, 0.08), 0 2px 8px rgba(0,0,0,0.06)"}
+        onMouseLeave={(e) => e.currentTarget.style.boxShadow = "0 0 0 1px rgba(45, 42, 36, 0.06), 0 1px 2px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.03)"}
+      >
+        <div style={{
+          flex: 1,
+          padding: "16px 20px",
+          fontSize: 15,
+          color: "var(--color-ink-ghost)",
+          fontFamily: "var(--font-body)",
         }}>
-          Showing scans for <strong>{selectedPatient}</strong>
+          Start a new scan...
+        </div>
+        <div style={{
+          padding: "16px 18px",
+          color: "var(--color-ink-ghost)",
+          display: "flex",
+          alignItems: "center",
+        }}>
+          <Send size={16} />
+        </div>
+      </div>
+
+      {/* Disclaimer */}
+      <p style={{
+        fontSize: 12,
+        color: "var(--color-ink-tertiary)",
+        textAlign: "center",
+        marginBottom: 32,
+        lineHeight: 1.5,
+      }}>
+        Quinn is an AI assistant, not a licensed practitioner, and does not provide medical advice, diagnosis, or treatment.
+      </p>
+
+      {/* Previous scans */}
+      {records.length > 0 && (
+        <div style={{ width: "100%" }}>
+          <div style={{
+            fontSize: 12,
+            fontWeight: 500,
+            color: "var(--color-ink-tertiary)",
+            textTransform: "uppercase",
+            letterSpacing: "0.04em",
+            padding: "0 0 14px",
+            marginBottom: 0,
+          }}>
+            Previous
+          </div>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {records.map((r) => (
+            <div
+              key={r.id}
+              style={{ position: "relative" }}
+            >
+              <button
+                onClick={() => handleOpen(r)}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 14,
+                  padding: "14px 16px",
+                  width: "100%",
+                  textAlign: "left",
+                  border: "none",
+                  borderRadius: 14,
+                  cursor: r.patient_name ? "pointer" : "default",
+                  transition: "background 0.12s, box-shadow 0.12s",
+                  color: "var(--color-ink)",
+                  fontFamily: "var(--font-body)",
+                  fontSize: 14,
+                  background: "var(--color-surface)",
+                  boxShadow: "0 0 0 1px rgba(45, 42, 36, 0.06), 0 1px 2px rgba(0,0,0,0.03)",
+                }}
+                onMouseEnter={(e) => { if (r.patient_name) e.currentTarget.style.boxShadow = "0 0 0 1px rgba(45, 42, 36, 0.1), 0 2px 6px rgba(0,0,0,0.05)"; }}
+                onMouseLeave={(e) => e.currentTarget.style.boxShadow = "0 0 0 1px rgba(45, 42, 36, 0.06), 0 1px 2px rgba(0,0,0,0.03)"}
+              >
+                {/* Icon */}
+                <div style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: 10,
+                  background: "rgba(45, 122, 79, 0.06)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  flexShrink: 0,
+                }}>
+                  <MessageCircle size={18} style={{ color: "var(--color-leaf)" }} />
+                </div>
+
+                {/* Content */}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontWeight: 500, lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {r.patient_name || r.filename}
+                  </div>
+                  <div style={{ fontSize: 12, color: "var(--color-ink-tertiary)", marginTop: 2, display: "flex", alignItems: "center", gap: 8 }}>
+                    <span>{timeAgo(r.timestamp)}</span>
+                    <span style={{ width: 3, height: 3, borderRadius: "50%", background: "var(--color-ink-ghost)", display: "inline-block" }} />
+                    <span style={{ color: suspicionColor(r.suspicion) }}>{r.suspicion}</span>
+                  </div>
+                </div>
+
+                {/* More button */}
+                <div
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setMenuOpenId(menuOpenId === r.id ? null : r.id);
+                  }}
+                  style={{
+                    padding: 6,
+                    color: "var(--color-ink-ghost)",
+                    flexShrink: 0,
+                    cursor: "pointer",
+                    borderRadius: 6,
+                    transition: "background 0.12s, color 0.12s",
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = "var(--color-surface-inset)"; e.currentTarget.style.color = "var(--color-ink-secondary)"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--color-ink-ghost)"; }}
+                >
+                  <MoreVertical size={16} />
+                </div>
+              </button>
+
+              {/* Context menu */}
+              {menuOpenId === r.id && (
+                <div
+                  ref={menuRef}
+                  style={{
+                    position: "absolute",
+                    top: 8,
+                    right: 36,
+                    background: "var(--color-surface)",
+                    borderRadius: 12,
+                    boxShadow: "0 4px 24px rgba(0,0,0,0.12), 0 0 0 1px rgba(0,0,0,0.04)",
+                    padding: 4,
+                    zIndex: 20,
+                    minWidth: 140,
+                  }}
+                >
+                  <button
+                    onClick={() => handleOpen(r)}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 10,
+                      padding: "9px 14px",
+                      width: "100%",
+                      border: "none",
+                      borderRadius: 8,
+                      cursor: "pointer",
+                      background: "transparent",
+                      color: "var(--color-ink)",
+                      fontSize: 14,
+                      fontFamily: "var(--font-body)",
+                      fontWeight: 500,
+                      transition: "background 0.1s",
+                      textAlign: "left",
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.background = "var(--color-surface-hover)"}
+                    onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
+                  >
+                    <FileText size={15} style={{ color: "var(--color-ink-secondary)" }} />
+                    Open
+                  </button>
+                  <button
+                    onClick={() => handleDelete(r)}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 10,
+                      padding: "9px 14px",
+                      width: "100%",
+                      border: "none",
+                      borderRadius: 8,
+                      cursor: "pointer",
+                      background: "transparent",
+                      color: "var(--color-high)",
+                      fontSize: 14,
+                      fontFamily: "var(--font-body)",
+                      fontWeight: 500,
+                      transition: "background 0.1s",
+                      textAlign: "left",
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.background = "var(--color-high-bg)"}
+                    onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
+                  >
+                    <Trash2 size={15} />
+                    Delete
+                  </button>
+                </div>
+              )}
+            </div>
+          ))}
+          </div>
         </div>
       )}
 
-      <div className="mobile-table-scroll" style={{
-        width: "100%",
-        background: "var(--color-surface)",
-        border: "1px solid var(--border-color)",
-        borderRadius: 10,
-        overflow: "hidden",
-      }}>
-        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
-          <thead>
-            <tr>
-              {["Date", "Patient", "File", "Suspicion", "Confidence", "Detections", "Modality", "Speed"].map(h => (
-                <th key={h} style={thStyle}>{h}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {records.length === 0 ? (
-              <tr>
-                <td colSpan={8} style={{ textAlign: "center", color: "var(--color-ink-tertiary)", padding: 48 }}>
-                  No scans.
-                </td>
-              </tr>
-            ) : (
-              records.map((r) => (
-                <tr key={r.id}>
-                  <td style={{ ...tdStyle, color: "var(--color-ink-tertiary)" }}>{new Date(r.timestamp).toLocaleString()}</td>
-                  <td style={{ ...tdStyle, fontWeight: 500 }}>{r.patient_name || "—"}</td>
-                  <td style={{ ...tdStyle, color: "var(--color-ink-secondary)" }}>{r.filename}</td>
-                  <td style={tdStyle}><span className={badgeLevel(r.suspicion)}>{r.suspicion}</span></td>
-                  <td style={tdStyle}>{(r.confidence * 100).toFixed(1)}%</td>
-                  <td style={tdStyle}>{r.detections_count}</td>
-                  <td style={{ ...tdStyle, color: "var(--color-ink-tertiary)" }}>{r.modality}</td>
-                  <td style={{ ...tdStyle, color: "var(--color-ink-tertiary)" }}>{r.turnaround_s}s</td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+      {records.length === 0 && (
+        <div style={{
+          textAlign: "center",
+          padding: "48px 20px",
+          color: "var(--color-ink-tertiary)",
+        }}>
+          <MessageCircle size={32} strokeWidth={1.5} style={{ color: "var(--color-ink-ghost)", marginBottom: 12 }} />
+          <div style={{ fontSize: 15, fontWeight: 500, color: "var(--color-ink-secondary)" }}>
+            No scans yet
+          </div>
+          <div style={{ fontSize: 13, marginTop: 4 }}>
+            Your scan history will appear here.
+          </div>
+        </div>
+      )}
 
-      <div style={{ display: "flex", gap: 8, justifyContent: "center", marginTop: 24 }}>
-        {[
-          { label: "Back", disabled: page === 0, onClick: () => setPage(Math.max(0, page - 1)) },
-          { label: "Next", disabled: !hasMore, onClick: () => setPage(page + 1) },
-        ].map(btn => (
-          <button
-            key={btn.label}
-            disabled={btn.disabled}
-            onClick={btn.onClick}
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              padding: "10px 20px",
-              borderRadius: 6,
-              fontSize: 14,
-              fontWeight: 500,
-              background: "transparent",
-              color: "var(--color-ink-secondary)",
-              border: "1px solid var(--border-emphasis)",
-              cursor: btn.disabled ? "not-allowed" : "pointer",
-              opacity: btn.disabled ? 0.4 : 1,
-              transition: "background 0.15s",
-              fontFamily: "var(--font-body)",
-            }}
-          >
-            {btn.label}
-          </button>
-        ))}
-      </div>
+      {/* Delete confirmation modal */}
+      <AnimatePresence>
+        {deleteTarget && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.15 }}
+              onClick={() => { if (!deleting) setDeleteTarget(null); }}
+              style={{
+                position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)",
+                backdropFilter: "blur(4px)", zIndex: 100,
+                display: "flex", alignItems: "center", justifyContent: "center",
+              }}
+            >
+              <motion.div
+                initial={{ opacity: 0, scale: 0.92, y: 10 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 6 }}
+                transition={{ type: "spring", duration: 0.35, bounce: 0 }}
+                onClick={(e) => e.stopPropagation()}
+                style={{
+                  background: "var(--color-surface)",
+                  borderRadius: 18,
+                  padding: "28px 28px 24px",
+                  width: 420,
+                  maxWidth: "90vw",
+                  boxShadow: "0 16px 48px rgba(0,0,0,0.18), 0 0 0 1px rgba(0,0,0,0.04)",
+                  position: "relative",
+                }}
+              >
+                {/* Close */}
+                <button
+                  onClick={() => { if (!deleting) setDeleteTarget(null); }}
+                  style={{
+                    position: "absolute", top: 14, right: 14,
+                    background: "none", border: "none", cursor: "pointer",
+                    color: "var(--color-ink-tertiary)", padding: 4, display: "flex",
+                    alignItems: "center", justifyContent: "center", borderRadius: 8,
+                    transition: "color 0.15s",
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.color = "var(--color-ink)"}
+                  onMouseLeave={(e) => e.currentTarget.style.color = "var(--color-ink-tertiary)"}
+                >
+                  <X size={18} />
+                </button>
+
+                <h3 style={{
+                  fontFamily: "var(--font-display)", fontSize: 20, fontWeight: 500,
+                  color: "var(--color-ink)", margin: "0 0 10px", lineHeight: 1.3,
+                }}>
+                  Delete this scan?
+                </h3>
+                <p style={{
+                  fontSize: 14, color: "var(--color-ink-secondary)", lineHeight: 1.6,
+                  margin: "0 0 24px", fontFamily: "var(--font-body)",
+                }}>
+                  This will permanently remove the scan from your record. This action cannot be undone.
+                </p>
+
+                <div style={{ display: "flex", gap: 10 }}>
+                  <button
+                    onClick={confirmDelete}
+                    disabled={deleting}
+                    style={{
+                      flex: 1, padding: "13px 0", borderRadius: 12, border: "none",
+                      background: "#c0392b", color: "white", fontSize: 14, fontWeight: 600,
+                      cursor: deleting ? "default" : "pointer", fontFamily: "var(--font-body)",
+                      opacity: deleting ? 0.7 : 1, transition: "opacity 0.15s, background 0.15s",
+                    }}
+                    onMouseEnter={(e) => { if (!deleting) e.currentTarget.style.background = "#a93226"; }}
+                    onMouseLeave={(e) => e.currentTarget.style.background = "#c0392b"}
+                  >
+                    {deleting ? "Deleting..." : "Delete scan"}
+                  </button>
+                  <button
+                    onClick={() => setDeleteTarget(null)}
+                    disabled={deleting}
+                    style={{
+                      flex: 1, padding: "13px 0", borderRadius: 12,
+                      border: "none", background: "rgba(66, 133, 244, 0.08)",
+                      color: "#4285F4", fontSize: 14, fontWeight: 600,
+                      cursor: "pointer", fontFamily: "var(--font-body)",
+                      transition: "background 0.15s",
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.background = "rgba(66, 133, 244, 0.14)"}
+                    onMouseLeave={(e) => e.currentTarget.style.background = "rgba(66, 133, 244, 0.08)"}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </motion.div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

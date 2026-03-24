@@ -38,6 +38,8 @@ interface AuthContextValue {
   loginWithGoogle: () => Promise<void>;
   logout: () => Promise<void>;
   refreshProfile: () => Promise<void>;
+  showAuthGate: boolean;
+  setShowAuthGate: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -52,6 +54,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showAuthGate, setShowAuthGate] = useState(false);
 
   const fetchProfile = async (u: User) => {
     const snap = await getDoc(doc(db, "users", u.uid));
@@ -126,7 +129,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, userProfile, loading, login, register, loginWithGoogle, logout, refreshProfile }}>
+    <AuthContext.Provider value={{ user, userProfile, loading, login, register, loginWithGoogle, logout, refreshProfile, showAuthGate, setShowAuthGate }}>
       {children}
     </AuthContext.Provider>
   );

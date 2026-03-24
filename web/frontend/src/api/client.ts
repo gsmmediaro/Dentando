@@ -4,6 +4,7 @@ import {
   getDocs,
   getDoc,
   setDoc,
+  deleteDoc,
   doc,
   query,
   orderBy,
@@ -329,4 +330,13 @@ export async function getPatientScansFromFirestore(uid: string, name: string): P
       };
     })
     .sort((a, b) => timestamp_to_millis(b.timestamp) - timestamp_to_millis(a.timestamp));
+}
+
+export async function deleteScanFromFirestore(uid: string, scanId: string): Promise<void> {
+  await deleteDoc(doc(db, "users", uid, "scans", scanId));
+}
+
+export async function updateScanPatientName(uid: string, scanId: string, newName: string): Promise<void> {
+  const { updateDoc } = await import("firebase/firestore");
+  await updateDoc(doc(db, "users", uid, "scans", scanId), { patientName: newName });
 }
