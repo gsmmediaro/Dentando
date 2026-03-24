@@ -41,6 +41,9 @@ const cardStyle: React.CSSProperties = {
   boxShadow: "0 12px 48px rgba(0,0,0,0.18), 0 0 0 1px rgba(0,0,0,0.04)",
   padding: "44px 36px 36px",
   overflow: "hidden",
+  display: "flex",
+  flexDirection: "column",
+  justifyContent: "center",
 };
 
 const headingStyle: React.CSSProperties = {
