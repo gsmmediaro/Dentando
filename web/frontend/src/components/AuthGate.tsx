@@ -3,7 +3,7 @@ import { useState } from "react";
 import { X, ArrowLeft } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import OnboardingFlow from "./OnboardingFlow";
-import quinnLogo from "../../../../quinnnlogo.svg";
+import { useTranslation } from "react-i18next";
 
 /* ── Google "G" icon ── */
 const GOOGLE_G = (
@@ -151,10 +151,11 @@ const backBtnStyle: React.CSSProperties = {
 
 /* ── Divider ── */
 function Divider() {
+  const { t } = useTranslation();
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 14, margin: "20px 0" }}>
       <div style={{ flex: 1, height: 1, background: "var(--border-emphasis)" }} />
-      <span style={{ fontSize: 12, fontFamily: "var(--font-body)", color: "var(--color-ink-tertiary)", fontWeight: 600, letterSpacing: 1, textTransform: "uppercase" }}>OR</span>
+      <span style={{ fontSize: 12, fontFamily: "var(--font-body)", color: "var(--color-ink-tertiary)", fontWeight: 600, letterSpacing: 1, textTransform: "uppercase" }}>{t("auth.divider.or")}</span>
       <div style={{ flex: 1, height: 1, background: "var(--border-emphasis)" }} />
     </div>
   );
@@ -167,6 +168,7 @@ const viewStyle: React.CSSProperties = {
 
 /* ── Main component ── */
 export default function AuthGate() {
+  const { t } = useTranslation();
   const { user, userProfile, loading, login, register, loginWithGoogle, showAuthGate, setShowAuthGate } = useAuth();
 
   const [view, setView] = useState<View>("login");
@@ -227,16 +229,16 @@ export default function AuthGate() {
       if (view === "email-login") {
         await login(email, password);
       } else {
-        if (!firstName.trim()) { setError("Enter your first name"); setSubmitting(false); return; }
+        if (!firstName.trim()) { setError(t("auth.errors.enterFirstName")); setSubmitting(false); return; }
         await register(email, password, firstName.trim(), lastName.trim());
       }
       setShowAuthGate(false);
     } catch (err: any) {
       const code = err?.code || "";
-      if (code === "auth/email-already-in-use") setError("This email is already in use");
-      else if (code === "auth/invalid-email") setError("Invalid email address");
-      else if (code === "auth/weak-password") setError("Password must be at least 6 characters");
-      else if (code === "auth/invalid-credential") setError("Wrong email or password");
+      if (code === "auth/email-already-in-use") setError(t("auth.errors.emailInUse"));
+      else if (code === "auth/invalid-email") setError(t("auth.errors.invalidEmail"));
+      else if (code === "auth/weak-password") setError(t("auth.errors.weakPassword"));
+      else if (code === "auth/invalid-credential") setError(t("auth.errors.wrongCredentials"));
       else setError(err?.message || "Something went wrong");
     }
     setSubmitting(false);
@@ -258,9 +260,9 @@ export default function AuthGate() {
   const renderLogin = () => (
     <div key="login" style={viewStyle}>
       <div style={{ textAlign: "center", marginBottom: 28 }}>
-        <img src={quinnLogo} alt="Quinn" style={{ width: 36, height: 36, marginBottom: 14 }} />
-        <h2 style={headingStyle}>Access Your Private<br />AI Dental Assistant</h2>
-        <p style={subtitleStyle}>Log in or create a new account</p>
+        <img src="/Cavio Logo.png" alt="Cavio" style={{ width: 36, height: 36, marginBottom: 14 }} />
+        <h2 style={headingStyle}>{t("auth.login.title")}</h2>
+        <p style={subtitleStyle}>{t("auth.login.subtitle")}</p>
       </div>
 
       <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
@@ -270,7 +272,7 @@ export default function AuthGate() {
           onMouseEnter={(e) => e.currentTarget.style.opacity = "0.88"}
           onMouseLeave={(e) => e.currentTarget.style.opacity = "1"}
         >
-          Log in with email
+          {t("auth.login.emailBtn")}
         </button>
         <button
           style={googleBtnStyle}
@@ -279,16 +281,16 @@ export default function AuthGate() {
           onMouseLeave={(e) => e.currentTarget.style.background = "rgba(66, 133, 244, 0.08)"}
         >
           {GOOGLE_G}
-          Continue with Google
+          {t("auth.login.googleBtn")}
         </button>
       </div>
 
       <Divider />
 
       <div style={{ textAlign: "center", fontSize: 14, color: "var(--color-ink-secondary)", fontFamily: "var(--font-body)" }}>
-        New here?{" "}
+        {t("auth.login.noAccount")}{" "}
         <button style={linkBtnStyle} onClick={() => switchView("register")}>
-          Create an account
+          {t("auth.login.createAccount")}
         </button>
       </div>
     </div>
@@ -298,9 +300,9 @@ export default function AuthGate() {
   const renderRegister = () => (
     <div key="register" style={viewStyle}>
       <div style={{ textAlign: "center", marginBottom: 28 }}>
-        <img src={quinnLogo} alt="Quinn" style={{ width: 36, height: 36, marginBottom: 14 }} />
-        <h2 style={headingStyle}>Your Free AI-Powered<br />Dental Analysis</h2>
-        <p style={subtitleStyle}>Choose a sign up option below</p>
+        <img src="/Cavio Logo.png" alt="Cavio" style={{ width: 36, height: 36, marginBottom: 14 }} />
+        <h2 style={headingStyle}>{t("auth.register.title")}</h2>
+        <p style={subtitleStyle}>{t("auth.register.subtitle")}</p>
       </div>
 
       <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
@@ -310,7 +312,7 @@ export default function AuthGate() {
           onMouseEnter={(e) => e.currentTarget.style.opacity = "0.88"}
           onMouseLeave={(e) => e.currentTarget.style.opacity = "1"}
         >
-          Sign up with email
+          {t("auth.register.emailBtn")}
         </button>
         <button
           style={googleBtnStyle}
@@ -319,24 +321,24 @@ export default function AuthGate() {
           onMouseLeave={(e) => e.currentTarget.style.background = "rgba(66, 133, 244, 0.08)"}
         >
           {GOOGLE_G}
-          Sign up with Google
+          {t("auth.register.googleBtn")}
         </button>
       </div>
 
       <Divider />
 
       <div style={{ textAlign: "center", fontSize: 14, color: "var(--color-ink-secondary)", fontFamily: "var(--font-body)" }}>
-        Already have an account?{" "}
+        {t("auth.register.hasAccount")}{" "}
         <button style={linkBtnStyle} onClick={() => switchView("login")}>
-          Log in here
+          {t("auth.register.loginHere")}
         </button>
       </div>
 
       <p style={{ textAlign: "center", fontSize: 12, color: "var(--color-ink-tertiary)", fontFamily: "var(--font-body)", marginTop: 16, lineHeight: 1.5 }}>
-        By signing up, you agree to our{" "}
-        <a href="/terms" style={{ color: "var(--color-leaf)", textDecoration: "underline" }}>Terms of Service</a>{" "}
-        and{" "}
-        <a href="/privacy" style={{ color: "var(--color-leaf)", textDecoration: "underline" }}>Privacy Policy</a>.
+        {t("auth.register.termsText")}{" "}
+        <a href="/terms" style={{ color: "var(--color-leaf)", textDecoration: "underline" }}>{t("auth.register.termsLink")}</a>{" "}
+        {t("auth.register.and")}{" "}
+        <a href="/privacy" style={{ color: "var(--color-leaf)", textDecoration: "underline" }}>{t("auth.register.privacyLink")}</a>.
       </p>
     </div>
   );
@@ -347,8 +349,8 @@ export default function AuthGate() {
     return (
       <div key="email-form" style={viewStyle}>
         <div style={{ textAlign: "center", marginBottom: 24 }}>
-          <img src={quinnLogo} alt="Quinn" style={{ width: 36, height: 36, marginBottom: 14 }} />
-          <h2 style={headingStyle}>{isLogin ? "Sign in" : "Create your account"}</h2>
+          <img src="/Cavio Logo.png" alt="Cavio" style={{ width: 36, height: 36, marginBottom: 14 }} />
+          <h2 style={headingStyle}>{isLogin ? t("auth.emailForm.signIn") : t("auth.emailForm.createAccount")}</h2>
         </div>
 
         <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
@@ -356,7 +358,7 @@ export default function AuthGate() {
             <div style={{ display: "flex", gap: 12 }}>
               <input
                 style={inputStyle}
-                placeholder="First name"
+                placeholder={t("auth.emailForm.firstName")}
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
                 onFocus={(e) => e.currentTarget.style.borderColor = "var(--color-leaf)"}
@@ -364,7 +366,7 @@ export default function AuthGate() {
               />
               <input
                 style={inputStyle}
-                placeholder="Last name"
+                placeholder={t("auth.emailForm.lastName")}
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
                 onFocus={(e) => e.currentTarget.style.borderColor = "var(--color-leaf)"}
@@ -375,7 +377,7 @@ export default function AuthGate() {
           <input
             style={inputStyle}
             type="email"
-            placeholder="Email"
+            placeholder={t("auth.emailForm.email")}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             onFocus={(e) => e.currentTarget.style.borderColor = "var(--color-leaf)"}
@@ -385,7 +387,7 @@ export default function AuthGate() {
           <input
             style={inputStyle}
             type="password"
-            placeholder="Password"
+            placeholder={t("auth.emailForm.password")}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             onFocus={(e) => e.currentTarget.style.borderColor = "var(--color-leaf)"}
@@ -405,7 +407,7 @@ export default function AuthGate() {
             disabled={submitting}
             style={{ ...primaryBtnStyle, opacity: submitting ? 0.7 : 1, marginTop: 4 }}
           >
-            {submitting ? "Loading..." : isLogin ? "Sign in" : "Create account"}
+            {submitting ? t("auth.emailForm.loading") : isLogin ? t("auth.emailForm.signIn") : t("auth.emailForm.createAccountBtn")}
           </button>
         </form>
       </div>

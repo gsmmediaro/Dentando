@@ -10,20 +10,26 @@ import {
 } from "../api/client";
 import { useAuth } from "../contexts/AuthContext";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 
-function timeAgo(timestamp: string | number): string {
-  const ms = typeof timestamp === "string" ? new Date(timestamp).getTime() : timestamp;
-  const seconds = Math.floor((Date.now() - ms) / 1000);
-  if (seconds < 60) return "just now";
-  const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) return `${minutes}m ago`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
-  const days = Math.floor(hours / 24);
-  if (days < 7) return `${days}d ago`;
-  if (days < 30) return `${Math.floor(days / 7)}w ago`;
-  if (days < 365) return `${Math.floor(days / 30)} month${Math.floor(days / 30) !== 1 ? "s" : ""} ago`;
-  return `${Math.floor(days / 365)}y ago`;
+function makeTimeAgo(t: (key: string, opts?: Record<string, unknown>) => string) {
+  return function timeAgo(timestamp: string | number): string {
+    const ms = typeof timestamp === "string" ? new Date(timestamp).getTime() : timestamp;
+    const seconds = Math.floor((Date.now() - ms) / 1000);
+    if (seconds < 60) return t("history.timeAgo.justNow");
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return t("history.timeAgo.mAgo", { n: minutes });
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return t("history.timeAgo.hAgo", { n: hours });
+    const days = Math.floor(hours / 24);
+    if (days < 7) return t("history.timeAgo.dAgo", { n: days });
+    if (days < 30) return t("history.timeAgo.wAgo", { n: Math.floor(days / 7) });
+    const months = Math.floor(days / 30);
+    if (days < 365) return months === 1
+      ? t("history.timeAgo.monthAgo", { n: months })
+      : t("history.timeAgo.monthsAgo", { n: months });
+    return t("history.timeAgo.yAgo", { n: Math.floor(days / 365) });
+  };
 }
 
 function suspicionColor(s: string) {
@@ -36,6 +42,8 @@ function suspicionColor(s: string) {
 }
 
 export default function History() {
+  const { t } = useTranslation();
+  const timeAgo = makeTimeAgo(t);
   const { user } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -91,10 +99,10 @@ export default function History() {
     setDeleting(true);
     await deleteScanFromFirestore(user.uid, deleteTarget.id);
     setRecords((prev) => prev.filter((rec) => rec.id !== deleteTarget.id));
-    window.dispatchEvent(new Event("quinn:patients-updated"));
+    window.dispatchEvent(new Event("cavio:patients-updated"));
     setDeleting(false);
     setDeleteTarget(null);
-    toast.success("Your scan was successfully deleted.");
+    toast.success(t("history.toast.deleted"));
   };
 
   return (
@@ -119,7 +127,7 @@ export default function History() {
         width: "100%",
         textWrap: "balance",
       }}>
-        Your Scans
+        {t("history.title")}
       </h1>
       <p style={{
         fontSize: 15,
@@ -129,8 +137,8 @@ export default function History() {
         width: "100%",
       }}>
         {selectedPatient
-          ? <>Showing scans for <strong style={{ color: "var(--color-ink)" }}>{selectedPatient}</strong></>
-          : "All your previous and ongoing scans"
+          ? <>{t("history.subtitlePatient")} <strong style={{ color: "var(--color-ink)" }}>{selectedPatient}</strong></>
+          : t("history.subtitle")
         }
       </p>
 
@@ -159,7 +167,7 @@ export default function History() {
           color: "var(--color-ink-ghost)",
           fontFamily: "var(--font-body)",
         }}>
-          Start a new scan...
+          {t("history.startNewScan")}
         </div>
         <div style={{
           padding: "16px 18px",
@@ -179,7 +187,7 @@ export default function History() {
         marginBottom: 32,
         lineHeight: 1.5,
       }}>
-        Quinn is an AI assistant, not a licensed practitioner, and does not provide medical advice, diagnosis, or treatment.
+        {t("history.disclaimer")}
       </p>
 
       {/* Previous scans */}
@@ -194,7 +202,7 @@ export default function History() {
             padding: "0 0 14px",
             marginBottom: 0,
           }}>
-            Previous
+            {t("history.previous")}
           </div>
 
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -311,7 +319,7 @@ export default function History() {
                     onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
                   >
                     <FileText size={15} style={{ color: "var(--color-ink-secondary)" }} />
-                    Open
+                    {t("history.menu.open")}
                   </button>
                   <button
                     onClick={() => handleDelete(r)}
@@ -336,7 +344,7 @@ export default function History() {
                     onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
                   >
                     <Trash2 size={15} />
-                    Delete
+                    {t("history.menu.delete")}
                   </button>
                 </div>
               )}
@@ -354,10 +362,10 @@ export default function History() {
         }}>
           <MessageCircle size={32} strokeWidth={1.5} style={{ color: "var(--color-ink-ghost)", marginBottom: 12 }} />
           <div style={{ fontSize: 15, fontWeight: 500, color: "var(--color-ink-secondary)" }}>
-            No scans yet
+            {t("history.noScans.title")}
           </div>
           <div style={{ fontSize: 13, marginTop: 4 }}>
-            Your scan history will appear here.
+            {t("history.noScans.subtitle")}
           </div>
         </div>
       )}
@@ -414,13 +422,13 @@ export default function History() {
                   fontFamily: "var(--font-display)", fontSize: 20, fontWeight: 500,
                   color: "var(--color-ink)", margin: "0 0 10px", lineHeight: 1.3,
                 }}>
-                  Delete this scan?
+                  {t("history.delete.title")}
                 </h3>
                 <p style={{
                   fontSize: 14, color: "var(--color-ink-secondary)", lineHeight: 1.6,
                   margin: "0 0 24px", fontFamily: "var(--font-body)",
                 }}>
-                  This will permanently remove the scan from your record. This action cannot be undone.
+                  {t("history.delete.message")}
                 </p>
 
                 <div style={{ display: "flex", gap: 10 }}>
@@ -436,7 +444,7 @@ export default function History() {
                     onMouseEnter={(e) => { if (!deleting) e.currentTarget.style.background = "#a93226"; }}
                     onMouseLeave={(e) => e.currentTarget.style.background = "#c0392b"}
                   >
-                    {deleting ? "Deleting..." : "Delete scan"}
+                    {deleting ? t("history.delete.deleting") : t("history.delete.confirm")}
                   </button>
                   <button
                     onClick={() => setDeleteTarget(null)}
@@ -451,7 +459,7 @@ export default function History() {
                     onMouseEnter={(e) => e.currentTarget.style.background = "rgba(66, 133, 244, 0.14)"}
                     onMouseLeave={(e) => e.currentTarget.style.background = "rgba(66, 133, 244, 0.08)"}
                   >
-                    Cancel
+                    {t("history.delete.cancel")}
                   </button>
                 </div>
               </motion.div>

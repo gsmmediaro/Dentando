@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from "react"
 import { Plus, Users, LogOut, ChevronRight, Menu, X, ArrowLeft, MessageCircle, HelpCircle, Settings, CornerDownRight } from "lucide-react";
 import { getPatientsFromFirestore, type PatientSummary } from "../api/client";
 import { useAuth } from "../contexts/AuthContext";
-import quinnLogo from "../../../../quinnnlogo.svg";
+import { useTranslation } from "react-i18next";
 
 function useIsMobile(breakpoint = 768) {
   const [mobile, setMobile] = useState(() => window.innerWidth <= breakpoint);
@@ -53,6 +53,7 @@ const linkBase: React.CSSProperties = {
 };
 
 export default function Layout({ children }: Props) {
+  const { t } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
@@ -94,8 +95,8 @@ export default function Layout({ children }: Props) {
 
   useEffect(() => {
     const handler = () => refreshPatients();
-    window.addEventListener("quinn:patients-updated", handler);
-    return () => window.removeEventListener("quinn:patients-updated", handler);
+    window.addEventListener("cavio:patients-updated", handler);
+    return () => window.removeEventListener("cavio:patients-updated", handler);
   }, [refreshPatients]);
 
   const handleNewScanClick = (event?: React.MouseEvent) => {
@@ -153,9 +154,8 @@ export default function Layout({ children }: Props) {
           top: 0,
           zIndex: 10,
         }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <img src={quinnLogo} alt="Quinn" style={{ width: 24, height: 24 }} />
-            <span style={{ fontFamily: "var(--font-display)", fontSize: 18, fontWeight: 500, color: "var(--color-ink)" }}>Quinn</span>
+          <div style={{ display: "flex", alignItems: "center" }}>
+            <img src="/Cavio Header.png" alt="Cavio" style={{ height: 28 }} />
           </div>
           <button
             onClick={() => setShowAuthGate(true)}
@@ -174,7 +174,7 @@ export default function Layout({ children }: Props) {
             onMouseEnter={(e) => e.currentTarget.style.opacity = "0.88"}
             onMouseLeave={(e) => e.currentTarget.style.opacity = "1"}
           >
-            Log in
+            {t("layout.nav.logIn")}
           </button>
         </div>
         {/* Main content */}
@@ -204,7 +204,7 @@ export default function Layout({ children }: Props) {
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <button
               onClick={() => { setDrawerView("menu"); setDrawerOpen(true); }}
-              aria-label="Open menu"
+              aria-label={t("layout.nav.openMenu")}
               style={{
                 display: "flex",
                 alignItems: "center",
@@ -218,7 +218,7 @@ export default function Layout({ children }: Props) {
             >
               <Menu size={20} />
             </button>
-            <span style={{ fontFamily: "var(--font-display)", fontSize: 18, fontWeight: 500, color: "var(--color-ink)" }}>Quinn</span>
+            <img src="/Cavio Header.png" alt="Cavio" style={{ height: 26 }} />
           </div>
           <div style={{ flex: 1 }} />
         </div>
@@ -269,9 +269,8 @@ export default function Layout({ children }: Props) {
                   /* ── Menu view ── */
                   <div style={{ padding: "8px 16px 24px" }}>
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                        <img src={quinnLogo} alt="Quinn" style={{ width: 20, height: 20 }} />
-                        <span style={{ fontFamily: "var(--font-display)", fontSize: 18, fontWeight: 500 }}>Quinn</span>
+                      <div style={{ display: "flex", alignItems: "center" }}>
+                        <img src="/Cavio Header.png" alt="Cavio" style={{ height: 26 }} />
                       </div>
                       <button
                         onClick={() => { setDrawerOpen(false); setDrawerView("menu"); }}
@@ -291,8 +290,10 @@ export default function Layout({ children }: Props) {
                           gap: 10,
                         }}
                       >
-                        <Plus size={18} strokeWidth={2.5} />
-                        New Scan
+                        <div style={{ width: 18, height: 18, borderRadius: "50%", background: "var(--color-leaf)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                          <Plus size={11} strokeWidth={3} color="white" />
+                        </div>
+                        {t("layout.nav.newScan")}
                       </button>
 
                       <button
@@ -304,7 +305,7 @@ export default function Layout({ children }: Props) {
                         onClick={() => setDrawerView("patients")}
                       >
                         <Users size={16} />
-                        <span style={{ flex: 1 }}>Recent Scans</span>
+                        <span style={{ flex: 1 }}>{t("layout.nav.recentScans")}</span>
                         <ChevronRight size={14} style={{ color: "var(--color-ink-tertiary)" }} />
                       </button>
                     </nav>
@@ -342,7 +343,7 @@ export default function Layout({ children }: Props) {
                                 }}
                               >
                                 <LogOut size={14} />
-                                Sign out
+                                {t("layout.nav.signOut")}
                               </button>
                             </div>
                           </>
@@ -404,7 +405,7 @@ export default function Layout({ children }: Props) {
                       >
                         <ArrowLeft size={20} />
                       </button>
-                      <span style={{ fontFamily: "var(--font-display)", fontSize: 18, fontWeight: 500, flex: 1 }}>Patients</span>
+                      <span style={{ fontFamily: "var(--font-display)", fontSize: 18, fontWeight: 500, flex: 1 }}>{t("layout.nav.patients")}</span>
                       <button
                         onClick={() => { setDrawerOpen(false); setDrawerView("menu"); }}
                         style={{ background: "none", border: "none", cursor: "pointer", padding: 4, color: "var(--color-ink-tertiary)" }}
@@ -415,8 +416,8 @@ export default function Layout({ children }: Props) {
 
                     {patients.length === 0 ? (
                       <div style={{ textAlign: "center", padding: "32px 20px", color: "var(--color-ink-tertiary)" }}>
-                        <div style={{ fontSize: 13 }}>No patients yet.</div>
-                        <div style={{ fontSize: 12, marginTop: 4 }}>Scans with names will appear here.</div>
+                        <div style={{ fontSize: 13 }}>{t("layout.patients.noPatients")}</div>
+                        <div style={{ fontSize: 12, marginTop: 4 }}>{t("layout.patients.scansWillAppear")}</div>
                       </div>
                     ) : (
                       patients.map((p) => (
@@ -457,7 +458,7 @@ export default function Layout({ children }: Props) {
                           <div style={{ flex: 1, minWidth: 0 }}>
                             <div style={{ fontWeight: 500, lineHeight: 1.3 }}>{p.name}</div>
                             <div style={{ fontSize: 12, color: "var(--color-ink-tertiary)" }}>
-                              {p.scan_count} {p.scan_count === 1 ? "scan" : "scans"}
+                              {p.scan_count} {p.scan_count === 1 ? t("layout.patients.scan") : t("layout.patients.scans")}
                             </div>
                           </div>
                           <div style={{
@@ -499,7 +500,7 @@ export default function Layout({ children }: Props) {
         {/* Hamburger button */}
         <button
           onClick={() => { setSidebarOpen(true); refreshPatients(); }}
-          aria-label="Open menu"
+          aria-label={t("layout.nav.openMenu")}
           style={{
             width: 40,
             height: 40,
@@ -521,6 +522,80 @@ export default function Layout({ children }: Props) {
         </button>
 
         <div style={{ flex: 1 }} />
+
+        {/* Profile avatar button — shown when logged in */}
+        {user && (
+          <div ref={profileRef} style={{ position: "relative" }}>
+            <button
+              onClick={() => setProfileOpen(prev => !prev)}
+              style={{
+                width: 36,
+                height: 36,
+                borderRadius: "50%",
+                border: "none",
+                background: "var(--color-leaf-subtle)",
+                color: "var(--color-leaf-text)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: 13,
+                fontWeight: 600,
+                cursor: "pointer",
+                fontFamily: "var(--font-body)",
+                flexShrink: 0,
+              }}
+            >
+              {userInitials}
+            </button>
+            {profileOpen && (
+              <>
+                <div style={{ position: "fixed", inset: 0, zIndex: 50 }} onClick={() => setProfileOpen(false)} />
+                <div style={{
+                  position: "absolute",
+                  top: "calc(100% + 8px)",
+                  right: 0,
+                  background: "var(--color-surface)",
+                  borderRadius: 14,
+                  boxShadow: "0 4px 24px rgba(0,0,0,0.12), 0 0 0 1px rgba(0,0,0,0.04)",
+                  padding: 6,
+                  minWidth: 180,
+                  zIndex: 51,
+                }}>
+                  <button
+                    onClick={() => { setProfileOpen(false); navigate("/settings"); }}
+                    style={{
+                      display: "flex", alignItems: "center", gap: 10,
+                      padding: "11px 14px", width: "100%", border: "none",
+                      borderRadius: 8, cursor: "pointer", background: "transparent",
+                      color: "var(--color-ink)", fontSize: 14, fontWeight: 500,
+                      fontFamily: "var(--font-body)", textAlign: "left",
+                      transition: "background 0.1s, color 0.1s",
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = "var(--color-surface-hover)"; e.currentTarget.style.color = "var(--color-leaf)"; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--color-ink)"; }}
+                  >
+                    {t("layout.nav.accountSettings")}
+                  </button>
+                  <button
+                    onClick={() => { setProfileOpen(false); logout(); }}
+                    style={{
+                      display: "flex", alignItems: "center", gap: 10,
+                      padding: "11px 14px", width: "100%", border: "none",
+                      borderRadius: 8, cursor: "pointer", background: "transparent",
+                      color: "var(--color-ink)", fontSize: 14, fontWeight: 500,
+                      fontFamily: "var(--font-body)", textAlign: "left",
+                      transition: "background 0.1s, color 0.1s",
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = "var(--color-surface-hover)"; e.currentTarget.style.color = "var(--color-leaf)"; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--color-ink)"; }}
+                  >
+                    {t("layout.nav.logout")}
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Sidebar drawer overlay */}
@@ -568,48 +643,26 @@ export default function Layout({ children }: Props) {
                 justifyContent: "space-between",
                 padding: "20px 20px 16px",
               }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <img src={quinnLogo} alt="Quinn" style={{ width: 24, height: 24 }} />
-                  <span style={{ fontFamily: "var(--font-display)", fontSize: 20, fontWeight: 500, color: "var(--color-ink)" }}>Quinn</span>
+                <div style={{ display: "flex", alignItems: "center" }}>
+                  <img src="/Cavio Header.png" alt="Cavio" style={{ height: 30 }} />
                 </div>
                 <button
                   onClick={() => { setSidebarOpen(false); setSelectedPatient(null); }}
-                  style={{ background: "none", border: "none", cursor: "pointer", padding: 6, color: "var(--color-ink-tertiary)", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 8 }}
-                  onMouseEnter={(e) => e.currentTarget.style.color = "var(--color-ink)"}
-                  onMouseLeave={(e) => e.currentTarget.style.color = "var(--color-ink-tertiary)"}
+                  style={{
+                    width: 40, height: 40, borderRadius: "50%",
+                    border: "1px solid var(--border-color)",
+                    background: "var(--color-surface)",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    cursor: "pointer", color: "var(--color-ink-secondary)",
+                    transition: "border-color 0.15s, box-shadow 0.15s",
+                    flexShrink: 0,
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--border-emphasis)"; e.currentTarget.style.boxShadow = "0 1px 4px rgba(0,0,0,0.06)"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--border-color)"; e.currentTarget.style.boxShadow = "none"; }}
                 >
-                  <X size={20} />
+                  <X size={18} />
                 </button>
               </div>
-
-              {/* User profile */}
-              {user && (
-                <div style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 10,
-                  padding: "8px 20px 16px",
-                }}>
-                  <div style={{
-                    width: 32,
-                    height: 32,
-                    borderRadius: "50%",
-                    background: "var(--color-leaf-subtle)",
-                    color: "var(--color-leaf-text)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: 12,
-                    fontWeight: 600,
-                    flexShrink: 0,
-                  }}>
-                    {userInitials}
-                  </div>
-                  <span style={{ fontSize: 14, fontWeight: 500, color: "var(--color-ink)" }}>
-                    {displayName || user.email}
-                  </span>
-                </div>
-              )}
 
               {/* Navigation */}
               <nav style={{ display: "flex", flexDirection: "column", gap: 2, padding: "0 16px 0" }}>
@@ -621,11 +674,13 @@ export default function Layout({ children }: Props) {
                     background: "transparent",
                     gap: 10,
                   }}
-                  onMouseEnter={(e) => e.currentTarget.style.background = "var(--color-surface-hover)"}
-                  onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = "var(--color-surface-hover)"; e.currentTarget.style.color = "var(--color-leaf)"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--color-leaf)"; }}
                 >
-                  <Plus size={18} strokeWidth={2.5} style={{ color: "var(--color-leaf)" }} />
-                  New Scan
+                  <div style={{ width: 18, height: 18, borderRadius: "50%", background: "var(--color-leaf)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    <Plus size={11} strokeWidth={3} color="white" />
+                  </div>
+                  {t("layout.nav.newScan")}
                 </button>
               </nav>
 
@@ -641,11 +696,11 @@ export default function Layout({ children }: Props) {
                   fontWeight: 600,
                   color: "var(--color-ink)",
                 }}>
-                  Recent Scans
+                  {t("layout.nav.recentScans")}
                 </div>
                 {patients.length === 0 ? (
                   <div style={{ padding: "16px 12px", color: "var(--color-ink-tertiary)", fontSize: 13 }}>
-                    No scans yet.
+                    {t("layout.patients.noScans")}
                   </div>
                 ) : (
                   <>
@@ -698,7 +753,7 @@ export default function Layout({ children }: Props) {
                       onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
                     >
                       <CornerDownRight size={16} style={{ color: "var(--color-ink-tertiary)", flexShrink: 0 }} />
-                      View all
+                      {t("layout.nav.viewAll")}
                     </button>
                   </>
                 )}
@@ -713,11 +768,11 @@ export default function Layout({ children }: Props) {
                     background: "transparent",
                     gap: 10,
                   }}
-                  onMouseEnter={(e) => e.currentTarget.style.background = "var(--color-surface-hover)"}
-                  onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = "var(--color-surface-hover)"; e.currentTarget.style.color = "var(--color-leaf)"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--color-ink)"; }}
                 >
                   <HelpCircle size={16} style={{ color: "var(--color-ink-secondary)" }} />
-                  Help & Resources
+                  {t("layout.nav.helpResources")}
                 </button>
                 <div style={{ position: "relative" }}>
                   <button
@@ -728,11 +783,11 @@ export default function Layout({ children }: Props) {
                       background: settingsPopover ? "var(--color-surface-hover)" : "transparent",
                       gap: 10,
                     }}
-                    onMouseEnter={(e) => e.currentTarget.style.background = "var(--color-surface-hover)"}
-                    onMouseLeave={(e) => { if (!settingsPopover) e.currentTarget.style.background = "transparent"; }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = "var(--color-surface-hover)"; e.currentTarget.style.color = "var(--color-leaf)"; }}
+                    onMouseLeave={(e) => { if (!settingsPopover) e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--color-ink)"; }}
                   >
                     <Settings size={16} style={{ color: "var(--color-ink-secondary)" }} />
-                    Settings
+                    {t("layout.nav.settings")}
                   </button>
                   {settingsPopover && (
                     <>
@@ -759,12 +814,12 @@ export default function Layout({ children }: Props) {
                             borderRadius: 8, cursor: "pointer", background: "transparent",
                             color: "var(--color-ink)", fontSize: 14, fontWeight: 500,
                             fontFamily: "var(--font-body)", textAlign: "left",
-                            transition: "background 0.1s",
+                            transition: "background 0.1s, color 0.1s",
                           }}
-                          onMouseEnter={(e) => e.currentTarget.style.background = "var(--color-surface-hover)"}
-                          onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
+                          onMouseEnter={(e) => { e.currentTarget.style.background = "var(--color-surface-hover)"; e.currentTarget.style.color = "var(--color-leaf)"; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--color-ink)"; }}
                         >
-                          Account Settings
+                          {t("layout.nav.accountSettings")}
                         </button>
                         <button
                           onClick={() => { setSettingsPopover(false); setSidebarOpen(false); logout(); }}
@@ -774,12 +829,12 @@ export default function Layout({ children }: Props) {
                             borderRadius: 8, cursor: "pointer", background: "transparent",
                             color: "var(--color-ink)", fontSize: 14, fontWeight: 500,
                             fontFamily: "var(--font-body)", textAlign: "left",
-                            transition: "background 0.1s",
+                            transition: "background 0.1s, color 0.1s",
                           }}
-                          onMouseEnter={(e) => e.currentTarget.style.background = "var(--color-surface-hover)"}
-                          onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
+                          onMouseEnter={(e) => { e.currentTarget.style.background = "var(--color-surface-hover)"; e.currentTarget.style.color = "var(--color-leaf)"; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--color-ink)"; }}
                         >
-                          Log out
+                          {t("layout.nav.logout")}
                         </button>
                       </div>
                     </>
@@ -792,9 +847,9 @@ export default function Layout({ children }: Props) {
                   lineHeight: 1.5,
                   color: "var(--color-ink-tertiary)",
                 }}>
-                  Always discuss Quinn output with a dentist. Quinn is an AI assistant, not a licensed practitioner, and does not provide medical advice or care. By using Quinn, you agree to our{" "}
-                  <a href="/terms" style={{ color: "var(--color-ink-secondary)", textDecoration: "underline" }}>Terms of Service</a>{" & "}
-                  <a href="/privacy" style={{ color: "var(--color-ink-secondary)", textDecoration: "underline" }}>Privacy Policy</a>.
+                  {t("layout.disclaimer")}{" "}
+                  <a href="/terms" style={{ color: "var(--color-ink-secondary)", textDecoration: "underline" }}>{t("layout.footer.terms")}</a>{" "}{t("layout.footer.and")}{" "}
+                  <a href="/privacy" style={{ color: "var(--color-ink-secondary)", textDecoration: "underline" }}>{t("layout.footer.privacy")}</a>.
                 </div>
                 <div style={{ padding: "6px 12px 0", fontSize: 11, color: "var(--color-ink-ghost)" }}>
                   v1.0.0

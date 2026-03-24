@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { Upload, X, Loader2, Layers, Gauge, Waypoints, Send, Shield, Pencil, ArrowLeft, Download } from "lucide-react";
-import quinnLogo from "../../../../quinnnlogo.svg";
 import * as SelectPrimitive from "@radix-ui/react-select";
 import * as SliderPrimitive from "@radix-ui/react-slider";
 import { AnimatePresence, motion } from "framer-motion";
@@ -17,6 +16,7 @@ import {
 } from "../api/client";
 import { useAuth } from "../contexts/AuthContext";
 import FindingsTable from "../components/FindingsTable";
+import { useTranslation } from "react-i18next";
 
 const ACCEPT = ".jpg,.jpeg,.png,.bmp,.tiff,.tif";
 
@@ -60,9 +60,10 @@ async function pick_first_valid_saved_scan(
 }
 
 export default function AnalyzeScan() {
+  const { t } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, userProfile } = useAuth();
+  const { user, userProfile, setShowAuthGate } = useAuth();
   const [models, setModels] = useState<ModelInfo[]>([]);
   const [selectedModel, setSelectedModel] = useState("");
   const [conf, setConf] = useState(0.5);
@@ -84,10 +85,10 @@ export default function AnalyzeScan() {
   const patientInputRef = useRef<HTMLInputElement>(null);
 
   const LOADING_MESSAGES = [
-    "Analyzing radiograph...",
-    "Detecting caries patterns...",
-    "Mapping dental structures...",
-    "Almost there...",
+    t("analyze.loading.analyzing"),
+    t("analyze.loading.detecting"),
+    t("analyze.loading.mapping"),
+    t("analyze.loading.almost"),
   ];
 
   useEffect(() => {
@@ -103,16 +104,16 @@ export default function AnalyzeScan() {
   // Time-aware greeting for warm professional touch
   const getGreeting = () => {
     const hour = new Date().getHours();
-    if (hour < 12) return "Good morning";
-    if (hour < 17) return "Good afternoon";
-    return "Good evening";
+    if (hour < 12) return t("analyze.greeting.morning");
+    if (hour < 17) return t("analyze.greeting.afternoon");
+    return t("analyze.greeting.evening");
   };
 
   useEffect(() => {
     getModels()
       .then(setModels)
       .catch(() => {
-        setError("Could not load models. Check backend URL/CORS settings.");
+        setError(t("analyze.errors.noModels"));
       });
   }, []);
 
@@ -161,21 +162,21 @@ export default function AnalyzeScan() {
       .then(async (scans) => {
         if (cancelled) return;
         if (!scans.length) {
-          setError("No saved scans found for this patient.");
+          setError(t("analyze.errors.noSavedScans"));
           return;
         }
 
         const valid_scan = await pick_first_valid_saved_scan(scans);
         if (cancelled) return;
         if (!valid_scan) {
-          setError("Saved scan image is no longer available (404). Please re-analyze the image.");
+          setError(t("analyze.errors.imageNotAvailable"));
           return;
         }
 
         const saved_result = to_result_from_saved_scan(valid_scan);
         setSavedScanId(valid_scan.id);
         if (!saved_result.annotated_image_url) {
-          setError("Saved scan has no image URL.");
+          setError(t("analyze.errors.noImageUrl"));
           return;
         }
 
@@ -187,7 +188,7 @@ export default function AnalyzeScan() {
       .catch((err: unknown) => {
         const message = err instanceof Error
           ? err.message
-          : "Could not load patient scan.";
+          : t("analyze.errors.couldNotLoad");
         setError(message);
       })
       .finally(() => {
@@ -227,6 +228,13 @@ export default function AnalyzeScan() {
 
   const handleAnalyze = async () => {
     if (!file || !selectedModel) return;
+
+    // Guest free-run gate: block if already used
+    if (!user && localStorage.getItem("cavio_guest_used")) {
+      setShowAuthGate(true);
+      return;
+    }
+
     setLoading(true);
     setError("");
     setResult(null);
@@ -241,6 +249,13 @@ export default function AnalyzeScan() {
         patientName,
       );
       setResult(res);
+
+      // Guest: mark free run used, then force auth after a short delay
+      if (!user) {
+        localStorage.setItem("cavio_guest_used", "1");
+        setTimeout(() => setShowAuthGate(true), 2500);
+      }
+
       if (user) {
         void saveScanToFirestore(user.uid, {
           file,
@@ -254,18 +269,18 @@ export default function AnalyzeScan() {
           annotatedImageUrl: res.annotated_image_url,
         })
           .then(() => {
-            window.dispatchEvent(new Event("quinn:patients-updated"));
+            window.dispatchEvent(new Event("cavio:patients-updated"));
           })
           .catch((save_error: unknown) => {
             const message =
               save_error instanceof Error
                 ? save_error.message
-                : "Scan analyzed, but failed to save in Firestore.";
+                : t("analyze.errors.saveFailed");
             setError(message);
           });
       }
     } catch (e: any) {
-      setError(e.message || "Analysis failed");
+      setError(e.message || t("analyze.errors.analysisFailed"));
     } finally {
       setLoading(false);
     }
@@ -406,20 +421,20 @@ export default function AnalyzeScan() {
             marginBottom: 28,
           }}
         >
-          {/* Quinn logo avatar */}
+          {/* Quinn logo avatar — on the left */}
           <div style={{
             width: 44,
             height: 44,
             borderRadius: "50%",
-            background: "transparent",
-            border: "2px solid var(--color-ink)",
+            background: "var(--color-bg)",
+            border: "3px solid var(--color-ink)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             zIndex: 3,
-            boxShadow: "0 0 0 2px var(--color-bg)",
+            boxShadow: "0 0 0 3px var(--color-bg)",
           }}>
-            <img src={quinnLogo} alt="Quinn" style={{ width: 22, height: 22, filter: "brightness(0)" }} />
+            <img src="/Cavio Logo.png" alt="Cavio" style={{ width: 24, height: 24, filter: "brightness(0)" }} />
           </div>
           {/* Dentist avatar 1 */}
           <div style={{
@@ -430,7 +445,7 @@ export default function AnalyzeScan() {
             overflow: "hidden",
             marginLeft: -10,
             zIndex: 2,
-            boxShadow: "0 0 0 2px var(--color-bg)",
+            boxShadow: "0 0 0 3px var(--color-bg)",
           }}>
             <img
               src="https://cdn.shadcnstudio.com/ss-assets/avatar/avatar-3.png"
@@ -447,7 +462,7 @@ export default function AnalyzeScan() {
             overflow: "hidden",
             marginLeft: -10,
             zIndex: 1,
-            boxShadow: "0 0 0 2px var(--color-bg)",
+            boxShadow: "0 0 0 3px var(--color-bg)",
           }}>
             <img
               src="https://cdn.shadcnstudio.com/ss-assets/avatar/avatar-6.png"
@@ -474,38 +489,30 @@ export default function AnalyzeScan() {
           }}
         >
           {firstName
-            ? `How can I help you today, Dr. ${firstName}?`
-            : "How can I help you today?"}
+            ? t("analyze.home.greetingWithName", { name: firstName })
+            : t("analyze.home.greeting")}
         </motion.h1>
 
-        {/* Description */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.15, ease: "easeOut" }}
-          style={{
-            fontSize: 15,
-            color: "var(--color-ink-secondary)",
-            textAlign: "left",
-            marginBottom: 40,
-            lineHeight: 1.75,
-            maxWidth: 520,
-          }}
-        >
-          {firstName ? (
-            <>
-              <p style={{ marginBottom: 12 }}>I'm your <strong style={{ color: "var(--color-ink)", fontWeight: 600 }}>private and personal AI dental assistant</strong>.</p>
-              <p style={{ marginBottom: 12 }}>Upload a panoramic or bitewing X-ray and get <strong style={{ color: "var(--color-ink)", fontWeight: 600 }}>instant caries detection</strong> with confidence scores and tooth-level findings.</p>
-              <p>Enter the patient name, then select the image to begin.</p>
-            </>
-          ) : (
-            <>
-              <p style={{ marginBottom: 12 }}>I'm your <strong style={{ color: "var(--color-ink)", fontWeight: 600 }}>private and personal AI dental assistant</strong>.</p>
-              <p style={{ marginBottom: 12 }}>Upload a dental X-ray and get <strong style={{ color: "var(--color-ink)", fontWeight: 600 }}>instant caries detection</strong> with confidence scores and tooth-level findings.</p>
-              <p>What can I help you with today?</p>
-            </>
-          )}
-        </motion.div>
+        {/* Description — only shown to non-logged-in users */}
+        {!user && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.15, ease: "easeOut" }}
+            style={{
+              fontSize: 15,
+              color: "var(--color-ink-secondary)",
+              textAlign: "left",
+              marginBottom: 40,
+              lineHeight: 1.75,
+              maxWidth: 520,
+            }}
+          >
+            <p style={{ marginBottom: 12 }}>{t("analyze.home.desc1Before")} <strong style={{ color: "var(--color-ink)", fontWeight: 600 }}>{t("analyze.home.desc1Bold")}</strong>{t("analyze.home.desc1After")}</p>
+            <p style={{ marginBottom: 12 }}>{t("analyze.home.desc2Before")} <strong style={{ color: "var(--color-ink)", fontWeight: 600 }}>{t("analyze.home.desc2Bold")}</strong> {t("analyze.home.desc2After")}</p>
+            <p>{t("analyze.home.desc3")}</p>
+          </motion.div>
+        )}
 
         {/* Upload input box */}
         <motion.div
@@ -538,7 +545,7 @@ export default function AnalyzeScan() {
             <input
               ref={patientInputRef}
               type="text"
-              placeholder="Patient name, then click to upload..."
+              placeholder={t("analyze.home.inputPlaceholder")}
               value={patientName}
               onClick={(e) => e.stopPropagation()}
               onChange={(e) => setPatientName(e.target.value)}
@@ -589,29 +596,10 @@ export default function AnalyzeScan() {
               onMouseEnter={(e) => { e.currentTarget.style.background = "var(--color-ink)"; e.currentTarget.style.color = "white"; }}
               onMouseLeave={(e) => { e.currentTarget.style.background = "var(--color-surface-inset)"; e.currentTarget.style.color = "var(--color-ink-secondary)"; }}
             >
-              Get Started
+              {t("analyze.home.getStarted")}
               <Send size={14} />
             </motion.button>
           </div>
-        </motion.div>
-
-        {/* HIPAA badge */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.5, delay: 0.45 }}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 6,
-            fontSize: 11,
-            color: "var(--color-ink-ghost)",
-            position: "absolute",
-            bottom: isMobile ? 20 : 32,
-          }}
-        >
-          <Shield size={12} />
-          HIPAA Compliant &middot; Private
         </motion.div>
 
         {/* Error */}
@@ -650,7 +638,7 @@ export default function AnalyzeScan() {
     const handleNameBlur = () => {
       if (user && savedScanId && patientName.trim()) {
         void updateScanPatientName(user.uid, savedScanId, patientName.trim());
-        window.dispatchEvent(new Event("quinn:patients-updated"));
+        window.dispatchEvent(new Event("cavio:patients-updated"));
       }
     };
 
@@ -694,7 +682,7 @@ export default function AnalyzeScan() {
             onMouseLeave={(e) => e.currentTarget.style.color = "var(--color-ink-secondary)"}
           >
             <ArrowLeft size={15} />
-            New scan
+            {t("analyze.newScan")}
           </button>
         </motion.div>
 
@@ -705,19 +693,19 @@ export default function AnalyzeScan() {
           transition={{ duration: 0.4, ease: "easeOut" }}
           style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10, marginBottom: 8, width: "100%" }}
         >
-          <img src={quinnLogo} alt="Quinn" style={{ width: 28, height: 28, filter: "brightness(0)", flexShrink: 0 }} />
+          <img src="/Cavio Logo.png" alt="Cavio" style={{ width: 28, height: 28, flexShrink: 0 }} />
           <div style={{ position: "relative", display: "inline-flex", alignItems: "center" }}>
             <input
               type="text"
               value={patientName}
               onChange={(e) => setPatientName(e.target.value)}
               onBlur={handleNameBlur}
-              placeholder="Unnamed patient"
+              placeholder={t("analyze.unnamedPatient")}
               style={{
                 fontFamily: "var(--font-display)", fontSize: isMobile ? 24 : 30,
                 fontWeight: 400, color: "var(--color-ink)", margin: 0, lineHeight: 1.2,
                 background: "transparent", border: "none", outline: "none",
-                padding: "2px 24px 2px 0", width: `${Math.max((patientName || "Unnamed patient").length, 10)}ch`,
+                padding: "2px 24px 2px 0", width: `${Math.max((patientName || t("analyze.unnamedPatient")).length, 10)}ch`,
                 borderBottom: "1px dashed transparent",
                 transition: "border-color 0.15s",
               }}
@@ -740,7 +728,7 @@ export default function AnalyzeScan() {
             fontFamily: "var(--font-body)", textAlign: "center",
           }}
         >
-          {result.modality} &middot; {result.num_detections} finding{result.num_detections !== 1 ? "s" : ""} &middot;{" "}
+          {result.modality} &middot; {result.num_detections} {result.num_detections !== 1 ? t("analyze.findings") : t("analyze.finding")} &middot;{" "}
           <span style={{ color: savedSuspicionColor.text, fontWeight: 500 }}>{result.suspicion_level}</span>
         </motion.p>
 
@@ -765,7 +753,7 @@ export default function AnalyzeScan() {
                 flexDirection: "column", alignItems: "center", justifyContent: "center",
                 color: "rgba(255,255,255,0.75)", fontSize: 14, padding: 32, textAlign: "center", gap: 12,
               }}>
-                <span>Saved image is unavailable.</span>
+                <span>{t("analyze.savedImageUnavailable")}</span>
                 <button
                   onClick={() => navigate(`/analyze?new=${Date.now()}`)}
                   style={{
@@ -774,13 +762,13 @@ export default function AnalyzeScan() {
                     fontWeight: 500, cursor: "pointer", fontFamily: "var(--font-body)",
                   }}
                 >
-                  Start new scan
+                  {t("analyze.startNewScan")}
                 </button>
               </div>
             ) : (
               <img
                 src={result.annotated_image_url}
-                alt={`${patientName || "Patient"} ${result.modality} scan`}
+                alt={`${patientName || t("analyze.unnamedPatient")} ${result.modality}`}
                 style={{ width: "100%", display: "block" }}
                 onLoad={() => setResultImageError(false)}
                 onError={() => setResultImageError(true)}
@@ -803,7 +791,7 @@ export default function AnalyzeScan() {
               }}
               onMouseEnter={(e) => e.currentTarget.style.background = "rgba(0,0,0,0.75)"}
               onMouseLeave={(e) => e.currentTarget.style.background = "rgba(0,0,0,0.55)"}
-              title="Download image"
+              title={t("analyze.downloadImage")}
             >
               <Download size={15} />
             </button>
@@ -844,19 +832,19 @@ export default function AnalyzeScan() {
           style={{ width: "100%", marginBottom: 28 }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 6 }}>
-            <img src={quinnLogo} alt="Quinn" style={{ width: 28, height: 28, filter: "brightness(0)", flexShrink: 0 }} />
+            <img src="/Cavio Logo.png" alt="Cavio" style={{ width: 28, height: 28, flexShrink: 0 }} />
             <div style={{ flex: 1, minWidth: 0 }}>
               <h1 style={{
                 fontFamily: "var(--font-display)", fontSize: isMobile ? 24 : 30,
                 fontWeight: 400, color: "var(--color-ink)", margin: 0, lineHeight: 1.2,
               }}>
-                {patientName || "Scan Analysis"}
+                {patientName || t("analyze.scanAnalysis")}
               </h1>
               <p style={{
                 fontSize: 13, color: "var(--color-ink-tertiary)", margin: "2px 0 0",
                 fontFamily: "var(--font-body)",
               }}>
-                {result.modality} &middot; {result.model_name} &middot; {result.num_detections} finding{result.num_detections !== 1 ? "s" : ""}
+                {result.modality} &middot; {result.model_name} &middot; {result.num_detections} {result.num_detections !== 1 ? t("analyze.findings") : t("analyze.finding")}
               </p>
             </div>
           </div>
@@ -878,7 +866,7 @@ export default function AnalyzeScan() {
             whiteSpace: "nowrap",
             margin: 0,
           }}>
-            Analyze X-ray
+            {t("analyze.analyzeXray")}
           </h1>
           <input
             style={{
@@ -888,7 +876,7 @@ export default function AnalyzeScan() {
               outline: "none", transition: "border-color 0.15s",
             }}
             type="text"
-            placeholder="Patient name (optional)"
+            placeholder={t("analyze.patientNameOptional")}
             value={patientName}
             onChange={(e) => setPatientName(e.target.value)}
             onFocus={(e) => e.currentTarget.style.borderColor = "var(--color-leaf)"}
@@ -1082,7 +1070,7 @@ export default function AnalyzeScan() {
                     color: loading ? "rgba(255,255,255,0.6)" : "white", flexShrink: 0,
                   }}
                 >
-                  {loading ? (<><Loader2 size={14} className="animate-spin" /> {LOADING_MESSAGES[loadingMsg]}</>) : "Analyze"}
+                  {loading ? (<><Loader2 size={14} className="animate-spin" /> {LOADING_MESSAGES[loadingMsg]}</>) : t("analyze.analyze")}
                 </motion.button>
               </div>
             )}
@@ -1186,7 +1174,7 @@ export default function AnalyzeScan() {
                   width: 220,
                 }}>
                   <div style={{ fontSize: 11, fontWeight: 500, color: "var(--color-ink-tertiary)", textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 10, fontFamily: "var(--font-display)" }}>
-                    Confidence threshold
+                    {t("analyze.confidenceThreshold")}
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                     <SliderPrimitive.Root
@@ -1214,10 +1202,10 @@ export default function AnalyzeScan() {
           <button
             onClick={() => setToothAssign(!toothAssign)}
             style={toolbarBtnStyle(toothAssign)}
-            title="Tooth assignment"
+            title={t("analyze.toothAssignment")}
           >
             <Waypoints size={13} />
-            Tooth
+            {t("analyze.tooth")}
           </button>
 
           {file && (
@@ -1240,7 +1228,7 @@ export default function AnalyzeScan() {
                   <Loader2 size={13} className="animate-spin" />
                   {LOADING_MESSAGES[loadingMsg]}
                 </>
-              ) : result ? "Analyze again" : "Analyze"}
+              ) : result ? t("analyze.analyzeAgain") : t("analyze.analyze")}
             </motion.button>
           )}
         </div>
@@ -1280,7 +1268,7 @@ export default function AnalyzeScan() {
               </div>
               <div style={{ padding: "8px 16px 16px" }}>
                 <div style={{ fontFamily: "var(--font-display)", fontSize: 18, fontWeight: 500, color: "var(--color-ink)", marginBottom: 10 }}>
-                  Models
+                  {t("analyze.modelsTitle", { defaultValue: "Modele" })}
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
                   {modelOptions.map((opt) => {
@@ -1376,7 +1364,7 @@ export default function AnalyzeScan() {
           }}
         >
           <Shield size={12} />
-          AI decision support — does not replace clinical diagnosis &middot; HIPAA Compliant
+          {t("analyze.aiDisclaimer", { defaultValue: "Suport AI — nu înlocuiește diagnosticul clinic" })}
         </motion.div>
       )}
     </div>

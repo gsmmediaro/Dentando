@@ -4,7 +4,7 @@ import * as SelectPrimitive from "@radix-ui/react-select";
 import { ChevronDown, X } from "lucide-react";
 import { db } from "../firebase";
 import { useAuth } from "../contexts/AuthContext";
-import quinnLogo from "../../../../quinnnlogo.svg";
+import { useTranslation } from "react-i18next";
 
 const SPECIALITIES = [
   "General dentist",
@@ -19,6 +19,8 @@ const SPECIALITIES = [
 
 const ROLES = ["Founder", "Dentist", "Assistant", "Manager", "Other"];
 const ORG_SIZES = ["Solo", "2-5", "6-10", "10+"];
+
+type TranslatedOption = { value: string; label: string };
 
 const inputStyle: React.CSSProperties = {
   width: "100%",
@@ -95,12 +97,15 @@ function StyledSelect({
   value: string;
   onValueChange: (v: string) => void;
   placeholder: string;
-  options: string[];
+  options: TranslatedOption[];
 }) {
+  const selectedLabel = options.find((o) => o.value === value)?.label;
   return (
     <SelectPrimitive.Root value={value || undefined} onValueChange={onValueChange}>
       <SelectPrimitive.Trigger style={triggerStyle(!!value)}>
-        <SelectPrimitive.Value placeholder={placeholder} />
+        <SelectPrimitive.Value placeholder={placeholder}>
+          {selectedLabel}
+        </SelectPrimitive.Value>
         <SelectPrimitive.Icon>
           <ChevronDown size={14} style={{ color: "var(--color-ink-tertiary)" }} />
         </SelectPrimitive.Icon>
@@ -116,12 +121,12 @@ function StyledSelect({
           <SelectPrimitive.Viewport style={{ padding: 4 }}>
             {options.map((opt) => (
               <SelectPrimitive.Item
-                key={opt}
-                value={opt}
+                key={opt.value}
+                value={opt.value}
                 style={itemStyle}
                 className="data-[highlighted]:bg-leaf-subtle"
               >
-                <SelectPrimitive.ItemText>{opt}</SelectPrimitive.ItemText>
+                <SelectPrimitive.ItemText>{opt.label}</SelectPrimitive.ItemText>
               </SelectPrimitive.Item>
             ))}
           </SelectPrimitive.Viewport>
@@ -132,6 +137,7 @@ function StyledSelect({
 }
 
 function TermsContent() {
+  const { t } = useTranslation();
   const h2: React.CSSProperties = {
     fontSize: 15,
     fontWeight: 600,
@@ -142,25 +148,26 @@ function TermsContent() {
   const p: React.CSSProperties = { fontSize: 13, color: "var(--color-ink-secondary)", marginBottom: 12, lineHeight: 1.65 };
   return (
     <>
-      <h2 style={h2}>1. Acceptance of terms</h2>
-      <p style={p}>By using the Quinn platform, you accept these terms and conditions in full. If you do not agree with any provision, please do not use the platform.</p>
-      <h2 style={h2}>2. Service description</h2>
-      <p style={p}>Quinn is an AI-powered support tool designed to assist dental professionals in analyzing dental radiographs. The platform does not replace professional clinical diagnosis.</p>
-      <h2 style={h2}>3. Proper use</h2>
-      <p style={p}>Results provided by the platform are indicative and must be validated by a qualified professional. The user is responsible for all clinical decisions based on the information provided.</p>
-      <h2 style={h2}>4. User account</h2>
-      <p style={p}>You are responsible for keeping your account and password confidential. Any activity performed through your account is your responsibility.</p>
-      <h2 style={h2}>5. Trial period</h2>
-      <p style={p}>New users receive a 7-day free trial. After the trial period, access to premium features may be restricted.</p>
-      <h2 style={h2}>6. Limitation of liability</h2>
-      <p style={p}>Quinn is not responsible for clinical decisions made based on platform results. The service is provided "as is," without warranties of any kind.</p>
-      <h2 style={h2}>7. Changes to terms</h2>
-      <p style={p}>We reserve the right to modify these terms at any time. Users will be notified through the platform about significant changes.</p>
+      <h2 style={h2}>{t("onboarding.termsContent.s1h")}</h2>
+      <p style={p}>{t("onboarding.termsContent.s1p")}</p>
+      <h2 style={h2}>{t("onboarding.termsContent.s2h")}</h2>
+      <p style={p}>{t("onboarding.termsContent.s2p")}</p>
+      <h2 style={h2}>{t("onboarding.termsContent.s3h")}</h2>
+      <p style={p}>{t("onboarding.termsContent.s3p")}</p>
+      <h2 style={h2}>{t("onboarding.termsContent.s4h")}</h2>
+      <p style={p}>{t("onboarding.termsContent.s4p")}</p>
+      <h2 style={h2}>{t("onboarding.termsContent.s5h")}</h2>
+      <p style={p}>{t("onboarding.termsContent.s5p")}</p>
+      <h2 style={h2}>{t("onboarding.termsContent.s6h")}</h2>
+      <p style={p}>{t("onboarding.termsContent.s6p")}</p>
+      <h2 style={h2}>{t("onboarding.termsContent.s7h")}</h2>
+      <p style={p}>{t("onboarding.termsContent.s7p")}</p>
     </>
   );
 }
 
 function PrivacyContent() {
+  const { t } = useTranslation();
   const h2: React.CSSProperties = {
     fontSize: 15,
     fontWeight: 600,
@@ -171,23 +178,24 @@ function PrivacyContent() {
   const p: React.CSSProperties = { fontSize: 13, color: "var(--color-ink-secondary)", marginBottom: 12, lineHeight: 1.65 };
   return (
     <>
-      <h2 style={h2}>1. Data collected</h2>
-      <p style={p}>We collect the following data: name, email address, organization information, and uploaded radiograph data for analysis. This data is required to provide the service.</p>
-      <h2 style={h2}>2. Data use</h2>
-      <p style={p}>Your data is used exclusively to provide and improve Quinn services. We do not sell or share personal data with third parties without your explicit consent.</p>
-      <h2 style={h2}>3. Data storage</h2>
-      <p style={p}>Data is securely stored on Firebase (Google Cloud) servers. Each user can access only their own data. We implement appropriate security measures to protect information.</p>
-      <h2 style={h2}>4. Patient data</h2>
-      <p style={p}>Radiographs and patient data are stored securely and are accessible only to the uploading user. We do not use patient data to train AI models without explicit consent.</p>
-      <h2 style={h2}>5. User rights</h2>
-      <p style={p}>You have the right to access, modify, or delete your personal data at any time. For personal data requests, contact us at our support email address.</p>
-      <h2 style={h2}>6. Cookies</h2>
-      <p style={p}>The platform uses essential cookies for authentication and proper functionality. We do not use tracking or advertising cookies.</p>
+      <h2 style={h2}>{t("onboarding.privacyContent.s1h")}</h2>
+      <p style={p}>{t("onboarding.privacyContent.s1p")}</p>
+      <h2 style={h2}>{t("onboarding.privacyContent.s2h")}</h2>
+      <p style={p}>{t("onboarding.privacyContent.s2p")}</p>
+      <h2 style={h2}>{t("onboarding.privacyContent.s3h")}</h2>
+      <p style={p}>{t("onboarding.privacyContent.s3p")}</p>
+      <h2 style={h2}>{t("onboarding.privacyContent.s4h")}</h2>
+      <p style={p}>{t("onboarding.privacyContent.s4p")}</p>
+      <h2 style={h2}>{t("onboarding.privacyContent.s5h")}</h2>
+      <p style={p}>{t("onboarding.privacyContent.s5p")}</p>
+      <h2 style={h2}>{t("onboarding.privacyContent.s6h")}</h2>
+      <p style={p}>{t("onboarding.privacyContent.s6p")}</p>
     </>
   );
 }
 
 export default function OnboardingFlow() {
+  const { t } = useTranslation();
   const { user, refreshProfile } = useAuth();
   const [step, setStep] = useState(0);
   const [speciality, setSpeciality] = useState("");
@@ -272,7 +280,7 @@ export default function OnboardingFlow() {
             color: "var(--color-ink)",
             margin: 0,
           }}>
-            {legalPopup === "terms" ? "Terms and Conditions" : "Privacy Policy"}
+            {legalPopup === "terms" ? t("onboarding.legalModal.terms") : t("onboarding.legalModal.privacy")}
           </h3>
           <button
             onClick={() => setLegalPopup(null)}
@@ -309,8 +317,8 @@ export default function OnboardingFlow() {
         {dots}
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: 20 }}>
           <img
-            src={quinnLogo}
-            alt="Quinn logo"
+            src="/Cavio Logo.png"
+            alt="Cavio logo"
             style={{ width: 28, height: 28, display: "block", marginBottom: 10 }}
           />
           <h2 style={{
@@ -321,7 +329,7 @@ export default function OnboardingFlow() {
             textAlign: "center",
             marginBottom: 0,
           }}>
-            About you
+            {t("onboarding.step0.title")}
           </h2>
         </div>
 
@@ -329,15 +337,15 @@ export default function OnboardingFlow() {
           <StyledSelect
             value={speciality}
             onValueChange={setSpeciality}
-            placeholder="Specialty"
-            options={SPECIALITIES}
+            placeholder={t("onboarding.step0.specialtyPlaceholder")}
+            options={SPECIALITIES.map((s) => ({ value: s, label: t(`onboarding.specialties.${s}`, { defaultValue: s }) }))}
           />
 
           <StyledSelect
             value={role}
             onValueChange={setRole}
-            placeholder="Role"
-            options={ROLES}
+            placeholder={t("onboarding.step0.rolePlaceholder")}
+            options={ROLES.map((r) => ({ value: r, label: t(`onboarding.roles.${r}`, { defaultValue: r }) }))}
           />
 
           <div style={{
@@ -355,21 +363,21 @@ export default function OnboardingFlow() {
               style={{ marginTop: 2, accentColor: "var(--color-leaf)", cursor: "pointer" }}
             />
             <span>
-              I agree to the{" "}
+              {t("onboarding.step0.agreeText")}{" "}
               <button
                 type="button"
                 onClick={() => setLegalPopup("terms")}
                 style={{ background: "none", border: "none", padding: 0, color: "var(--color-leaf)", textDecoration: "underline", fontWeight: 500, cursor: "pointer", fontFamily: "var(--font-body)", fontSize: 13 }}
               >
-                Terms
+                {t("onboarding.step0.terms")}
               </button>
-              {" "}and the{" "}
+              {" "}{t("onboarding.step0.and")}{" "}
               <button
                 type="button"
                 onClick={() => setLegalPopup("privacy")}
                 style={{ background: "none", border: "none", padding: 0, color: "var(--color-leaf)", textDecoration: "underline", fontWeight: 500, cursor: "pointer", fontFamily: "var(--font-body)", fontSize: 13 }}
               >
-                Privacy Policy
+                {t("onboarding.step0.privacy")}
               </button>
             </span>
           </div>
@@ -379,7 +387,7 @@ export default function OnboardingFlow() {
             onClick={() => setStep(1)}
             style={{ ...primaryBtnStyle, opacity: canNext0 ? 1 : 0.5, cursor: canNext0 ? "pointer" : "not-allowed", marginTop: 8 }}
           >
-            Continue
+            {t("onboarding.continue")}
           </button>
         </div>
       </div>
@@ -392,8 +400,8 @@ export default function OnboardingFlow() {
         {dots}
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: 20 }}>
           <img
-            src={quinnLogo}
-            alt="Quinn logo"
+            src="/Cavio Logo.png"
+            alt="Cavio logo"
             style={{ width: 28, height: 28, display: "block", marginBottom: 10 }}
           />
           <h2 style={{
@@ -404,14 +412,14 @@ export default function OnboardingFlow() {
             textAlign: "center",
             marginBottom: 0,
           }}>
-            Your organization
+            {t("onboarding.step1.title")}
           </h2>
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           <input
             style={inputStyle}
-            placeholder="Organization name"
+            placeholder={t("onboarding.step1.orgName")}
             value={orgName}
             onChange={(e) => setOrgName(e.target.value)}
             onFocus={(e) => e.currentTarget.style.borderColor = "var(--color-leaf)"}
@@ -421,8 +429,8 @@ export default function OnboardingFlow() {
           <StyledSelect
             value={orgSize}
             onValueChange={setOrgSize}
-            placeholder="How many dentists work at your clinic?"
-            options={ORG_SIZES}
+            placeholder={t("onboarding.step1.dentistsPlaceholder")}
+            options={ORG_SIZES.map((s) => ({ value: s, label: t(`onboarding.orgSizes.${s}`, { defaultValue: s }) }))}
           />
 
           <div style={{ display: "flex", gap: 12, marginTop: 8 }}>
@@ -441,14 +449,14 @@ export default function OnboardingFlow() {
                 fontFamily: "var(--font-body)",
               }}
             >
-              Back
+              {t("onboarding.step1.back")}
             </button>
             <button
               disabled={!canNext1}
               onClick={() => setStep(2)}
               style={{ ...primaryBtnStyle, flex: 2, opacity: canNext1 ? 1 : 0.5, cursor: canNext1 ? "pointer" : "not-allowed" }}
             >
-              Continue
+              {t("onboarding.continue")}
             </button>
           </div>
         </div>
@@ -462,8 +470,8 @@ export default function OnboardingFlow() {
       {dots}
       <div style={{ textAlign: "center" }}>
         <img
-          src={quinnLogo}
-          alt="Quinn logo"
+          src="/Cavio Logo.png"
+          alt="Cavio logo"
           style={{ width: 28, height: 28, display: "block", margin: "0 auto 10px" }}
         />
         <h2 style={{
@@ -473,7 +481,7 @@ export default function OnboardingFlow() {
           color: "var(--color-ink)",
           marginBottom: 8,
         }}>
-          Welcome!
+          {t("onboarding.step2.title")}
         </h2>
         <p style={{
           fontSize: 14,
@@ -481,14 +489,14 @@ export default function OnboardingFlow() {
           marginBottom: 24,
           lineHeight: 1.6,
         }}>
-          You have 7 days of free access on us.
+          {t("onboarding.step2.trialText")}
         </p>
         <button
           onClick={handleFinish}
           disabled={saving}
           style={{ ...primaryBtnStyle, opacity: saving ? 0.7 : 1 }}
         >
-          {saving ? "Saving..." : "Get Started"}
+          {saving ? t("onboarding.step2.saving") : t("onboarding.step2.getStarted")}
         </button>
       </div>
     </div>

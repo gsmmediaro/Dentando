@@ -1,0 +1,280 @@
+{
+  "auth": {
+    "login": {
+      "title": "Access Your Private AI Dental Assistant",
+      "subtitle": "Log in or create a new account",
+      "emailBtn": "Log in with email",
+      "googleBtn": "Continue with Google",
+      "noAccount": "New here?",
+      "createAccount": "Create an account"
+    },
+    "register": {
+      "title": "Your Free AI-Powered Dental Analysis",
+      "subtitle": "Choose a sign up option below",
+      "emailBtn": "Sign up with email",
+      "googleBtn": "Sign up with Google",
+      "hasAccount": "Already have an account?",
+      "loginHere": "Log in here",
+      "termsText": "By signing up, you agree to our",
+      "termsLink": "Terms of Service",
+      "and": "and",
+      "privacyLink": "Privacy Policy"
+    },
+    "emailForm": {
+      "signIn": "Sign in",
+      "createAccount": "Create your account",
+      "firstName": "First name",
+      "lastName": "Last name",
+      "email": "Email",
+      "password": "Password",
+      "loading": "Loading...",
+      "createAccountBtn": "Create account"
+    },
+    "errors": {
+      "emailInUse": "This email is already in use",
+      "invalidEmail": "Invalid email address",
+      "weakPassword": "Password must be at least 6 characters",
+      "wrongCredentials": "Wrong email or password",
+      "enterFirstName": "Enter your first name"
+    },
+    "divider": {
+      "or": "OR"
+    }
+  },
+  "layout": {
+    "nav": {
+      "newScan": "New Scan",
+      "recentScans": "Recent Scans",
+      "viewAll": "View all",
+      "patients": "Patients",
+      "helpResources": "Help & Resources",
+      "settings": "Settings",
+      "accountSettings": "Account Settings",
+      "logout": "Log out",
+      "signOut": "Sign out",
+      "logIn": "Log in",
+      "openMenu": "Open menu"
+    },
+    "patients": {
+      "noPatients": "No patients yet.",
+      "scansWillAppear": "Scans with names will appear here.",
+      "noScans": "No scans yet.",
+      "scan": "scan",
+      "scans": "scans"
+    },
+    "disclaimer": "Always discuss Cavio output with a dentist. Cavio is an AI assistant, not a licensed practitioner, and does not provide medical advice or care. By using Cavio, you agree to our",
+    "footer": {
+      "terms": "Terms of Service",
+      "privacy": "Privacy Policy",
+      "and": "&"
+    }
+  },
+  "onboarding": {
+    "step0": {
+      "title": "About you",
+      "specialtyPlaceholder": "Specialty",
+      "rolePlaceholder": "Role",
+      "agreeText": "I agree to the",
+      "terms": "Terms",
+      "and": "and the",
+      "privacy": "Privacy Policy"
+    },
+    "step1": {
+      "title": "Your organization",
+      "orgName": "Organization name",
+      "dentistsPlaceholder": "How many dentists work at your clinic?",
+      "back": "Back"
+    },
+    "step2": {
+      "title": "Welcome!",
+      "trialText": "You have 7 days of free access on us.",
+      "getStarted": "Get Started",
+      "saving": "Saving..."
+    },
+    "continue": "Continue",
+    "specialties": {
+      "General dentist": "General dentist",
+      "Orthodontist": "Orthodontist",
+      "Endodontist": "Endodontist",
+      "Oral surgeon": "Oral surgeon",
+      "Pediatric dentist": "Pediatric dentist",
+      "Periodontist": "Periodontist",
+      "Prosthodontist": "Prosthodontist",
+      "Other": "Other"
+    },
+    "roles": {
+      "Founder": "Founder",
+      "Dentist": "Dentist",
+      "Assistant": "Assistant",
+      "Manager": "Manager",
+      "Other": "Other"
+    },
+    "orgSizes": {
+      "Solo": "Solo"
+    },
+    "legalModal": {
+      "terms": "Terms and Conditions",
+      "privacy": "Privacy Policy"
+    },
+    "termsContent": {
+      "title": "Terms and Conditions",
+      "s1h": "1. Acceptance of terms",
+      "s1p": "By using the Cavio platform, you accept these terms and conditions in full. If you do not agree with any provision, please do not use the platform.",
+      "s2h": "2. Service description",
+      "s2p": "Cavio is an AI-powered support tool designed to assist dental professionals in analyzing dental radiographs. The platform does not replace professional clinical diagnosis.",
+      "s3h": "3. Proper use",
+      "s3p": "Results provided by the platform are indicative and must be validated by a qualified professional. The user is responsible for all clinical decisions based on the information provided.",
+      "s4h": "4. User account",
+      "s4p": "You are responsible for keeping your account and password confidential. Any activity performed through your account is your responsibility.",
+      "s5h": "5. Trial period",
+      "s5p": "New users receive a 7-day free trial. After the trial period, access to premium features may be restricted.",
+      "s6h": "6. Limitation of liability",
+      "s6p": "Cavio is not responsible for clinical decisions made based on platform results. The service is provided \"as is,\" without warranties of any kind.",
+      "s7h": "7. Changes to terms",
+      "s7p": "We reserve the right to modify these terms at any time. Users will be notified through the platform about significant changes."
+    },
+    "privacyContent": {
+      "title": "Privacy Policy",
+      "s1h": "1. Data collected",
+      "s1p": "We collect the following data: name, email address, organization information, and uploaded radiograph data for analysis. This data is required to provide the service.",
+      "s2h": "2. Data use",
+      "s2p": "Your data is used exclusively to provide and improve Cavio services. We do not sell or share personal data with third parties without your explicit consent.",
+      "s3h": "3. Data storage",
+      "s3p": "Data is securely stored on Firebase (Google Cloud) servers. Each user can access only their own data. We implement appropriate security measures to protect information.",
+      "s4h": "4. Patient data",
+      "s4p": "Radiographs and patient data are stored securely and are accessible only to the uploading user. We do not use patient data to train AI models without explicit consent.",
+      "s5h": "5. User rights",
+      "s5p": "You have the right to access, modify, or delete your personal data at any time. For personal data requests, contact us at our support email address.",
+      "s6h": "6. Cookies",
+      "s6p": "The platform uses essential cookies for authentication and proper functionality. We do not use tracking or advertising cookies."
+    }
+  },
+  "analyze": {
+    "greeting": {
+      "morning": "Good morning",
+      "afternoon": "Good afternoon",
+      "evening": "Good evening"
+    },
+    "home": {
+      "greetingWithName": "How can I help you today, Dr. {{name}}?",
+      "greeting": "How can I help you today?",
+      "desc1Before": "I'm your",
+      "desc1Bold": "private and personal AI dental assistant",
+      "desc1After": ".",
+      "desc2Before": "Upload a dental X-ray and get",
+      "desc2Bold": "instant caries detection",
+      "desc2After": "with confidence scores and tooth-level findings.",
+      "desc3": "What can I help you with today?",
+      "inputPlaceholder": "Patient name, then click to upload...",
+      "getStarted": "Get Started",
+      "hipaa": "HIPAA Compliant · Private"
+    },
+    "newScan": "New scan",
+    "unnamedPatient": "Unnamed patient",
+    "finding": "finding",
+    "findings": "findings",
+    "savedImageUnavailable": "Saved image is unavailable.",
+    "startNewScan": "Start new scan",
+    "scanAnalysis": "Scan Analysis",
+    "analyzeXray": "Analyze X-ray",
+    "patientNameOptional": "Patient name (optional)",
+    "analyze": "Analyze",
+    "analyzeAgain": "Analyze again",
+    "confidenceThreshold": "Confidence threshold",
+    "tooth": "Tooth",
+    "toothAssignment": "Tooth assignment",
+    "downloadImage": "Download image",
+    "modelsTitle": "Models",
+    "aiDisclaimer": "AI decision support — does not replace clinical diagnosis",
+    "loading": {
+      "analyzing": "Analyzing radiograph...",
+      "detecting": "Detecting caries patterns...",
+      "mapping": "Mapping dental structures...",
+      "almost": "Almost there..."
+    },
+    "errors": {
+      "noModels": "Could not load models. Check backend URL/CORS settings.",
+      "noSavedScans": "No saved scans found for this patient.",
+      "imageNotAvailable": "Saved scan image is no longer available (404). Please re-analyze the image.",
+      "noImageUrl": "Saved scan has no image URL.",
+      "couldNotLoad": "Could not load patient scan.",
+      "analysisFailed": "Analysis failed",
+      "saveFailed": "Scan analyzed, but failed to save in Firestore"
+    },
+    "modality": {
+      "panoramic": "Panoramic",
+      "bitewing": "Bitewing",
+      "savedScan": "Saved scan"
+    }
+  },
+  "history": {
+    "title": "Your Scans",
+    "subtitle": "All your previous and ongoing scans",
+    "subtitlePatient": "Showing scans for",
+    "startNewScan": "Start a new scan...",
+    "disclaimer": "Cavio is an AI assistant, not a licensed practitioner, and does not provide medical advice, diagnosis, or treatment.",
+    "previous": "Previous",
+    "noScans": {
+      "title": "No scans yet",
+      "subtitle": "Your scan history will appear here."
+    },
+    "menu": {
+      "open": "Open",
+      "delete": "Delete"
+    },
+    "delete": {
+      "title": "Delete this scan?",
+      "message": "This will permanently remove the scan from your record. This action cannot be undone.",
+      "confirm": "Delete scan",
+      "deleting": "Deleting...",
+      "cancel": "Cancel"
+    },
+    "toast": {
+      "deleted": "Your scan was successfully deleted."
+    },
+    "timeAgo": {
+      "justNow": "just now",
+      "mAgo": "{{n}}m ago",
+      "hAgo": "{{n}}h ago",
+      "dAgo": "{{n}}d ago",
+      "wAgo": "{{n}}w ago",
+      "monthAgo": "{{n}} month ago",
+      "monthsAgo": "{{n}} months ago",
+      "yAgo": "{{n}}y ago"
+    }
+  },
+  "privacy": {
+    "title": "Privacy Policy",
+    "s1h": "1. Data collected",
+    "s1p": "We collect the following data: name, email address, organization information, and uploaded radiograph data for analysis. This data is required to provide the service.",
+    "s2h": "2. Data use",
+    "s2p": "Your data is used exclusively to provide and improve Cavio services. We do not sell or share personal data with third parties without your explicit consent.",
+    "s3h": "3. Data storage",
+    "s3p": "Data is securely stored on Firebase (Google Cloud) servers. Each user can access only their own data. We implement appropriate security measures to protect information.",
+    "s4h": "4. Patient data",
+    "s4p": "Radiographs and patient data are stored securely and are accessible only to the uploading user. We do not use patient data to train AI models without explicit consent.",
+    "s5h": "5. User rights",
+    "s5p": "You have the right to access, modify, or delete your personal data at any time. For personal data requests, contact us at our support email address.",
+    "s6h": "6. Cookies",
+    "s6p": "The platform uses essential cookies for authentication and proper functionality. We do not use tracking or advertising cookies.",
+    "s7h": "7. Contact",
+    "s7p": "For any questions regarding this privacy policy or your data, feel free to contact us."
+  },
+  "terms": {
+    "title": "Terms and Conditions",
+    "s1h": "1. Acceptance of terms",
+    "s1p": "By using the Cavio platform, you accept these terms and conditions in full. If you do not agree with any provision, please do not use the platform.",
+    "s2h": "2. Service description",
+    "s2p": "Cavio is an AI-powered support tool designed to assist dental professionals in analyzing dental radiographs. The platform does not replace professional clinical diagnosis.",
+    "s3h": "3. Proper use",
+    "s3p": "Results provided by the platform are indicative and must be validated by a qualified professional. The user is responsible for all clinical decisions based on the information provided.",
+    "s4h": "4. User account",
+    "s4p": "You are responsible for keeping your account and password confidential. Any activity performed through your account is your responsibility.",
+    "s5h": "5. Trial period",
+    "s5p": "New users receive a 7-day free trial. After the trial period, access to premium features may be restricted.",
+    "s6h": "6. Limitation of liability",
+    "s6p": "Cavio is not responsible for clinical decisions made based on platform results. The service is provided \"as is,\" without warranties of any kind.",
+    "s7h": "7. Changes to terms",
+    "s7p": "We reserve the right to modify these terms at any time. Users will be notified through the platform about significant changes."
+  }
+}
