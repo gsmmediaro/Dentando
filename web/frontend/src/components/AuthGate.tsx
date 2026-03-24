@@ -35,6 +35,7 @@ const cardStyle: React.CSSProperties = {
   position: "relative",
   width: 460,
   maxWidth: "92vw",
+  minHeight: 520,
   background: "var(--color-surface)",
   borderRadius: 20,
   boxShadow: "0 12px 48px rgba(0,0,0,0.18), 0 0 0 1px rgba(0,0,0,0.04)",
@@ -260,7 +261,7 @@ export default function AuthGate() {
   const renderLogin = () => (
     <div key="login" style={viewStyle}>
       <div style={{ textAlign: "center", marginBottom: 28 }}>
-        <img src="/Cavio Logo.png" alt="Cavio" style={{ width: 36, height: 36, marginBottom: 14 }} />
+        <img src="/Cavio Logo.png" alt="Cavio" style={{ width: 52, height: 52, marginBottom: 14, display: "block", marginLeft: "auto", marginRight: "auto" }} />
         <h2 style={headingStyle}>{t("auth.login.title")}</h2>
         <p style={subtitleStyle}>{t("auth.login.subtitle")}</p>
       </div>
@@ -300,7 +301,7 @@ export default function AuthGate() {
   const renderRegister = () => (
     <div key="register" style={viewStyle}>
       <div style={{ textAlign: "center", marginBottom: 28 }}>
-        <img src="/Cavio Logo.png" alt="Cavio" style={{ width: 36, height: 36, marginBottom: 14 }} />
+        <img src="/Cavio Logo.png" alt="Cavio" style={{ width: 52, height: 52, marginBottom: 14, display: "block", marginLeft: "auto", marginRight: "auto" }} />
         <h2 style={headingStyle}>{t("auth.register.title")}</h2>
         <p style={subtitleStyle}>{t("auth.register.subtitle")}</p>
       </div>
@@ -349,7 +350,7 @@ export default function AuthGate() {
     return (
       <div key="email-form" style={viewStyle}>
         <div style={{ textAlign: "center", marginBottom: 24 }}>
-          <img src="/Cavio Logo.png" alt="Cavio" style={{ width: 36, height: 36, marginBottom: 14 }} />
+          <img src="/Cavio Logo.png" alt="Cavio" style={{ width: 52, height: 52, marginBottom: 14, display: "block", marginLeft: "auto", marginRight: "auto" }} />
           <h2 style={headingStyle}>{isLogin ? t("auth.emailForm.signIn") : t("auth.emailForm.createAccount")}</h2>
         </div>
 
